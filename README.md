@@ -1,1 +1,1 @@
-# DonkySDK-XamarinForms-Modular
+# DonkySDK-Xamarin-Modular
