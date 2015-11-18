@@ -481,3 +481,8 @@ Within the SDK, Inversion of Control and Dependency Injection utilises Autofac (
 
 Although the Xamarin SDK documentation is substantially front-end client documentation, make sure that you have thoroughly explored **Donky Control**, which is your backend portal and is available from the [User Login](http://www.mobiledonky.com).
 
+## Integration API
+
+A substantial part of Donky Control can be automated using our [Integration API](http://docs.mobiledonky.com/docs/using-donkys-integration-apis)
+
+For example, rather than copying and pasting an HTML5 Rich Message into a Campaign, you can create your own back-office tools that better service your established workflows, which can automatically upload them to a campaign using our Integration API.
