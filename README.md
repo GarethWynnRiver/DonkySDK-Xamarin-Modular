@@ -41,4 +41,27 @@ Donky Networks Ltd, sdk@mobiledonky.com
 
 DonkySDK-Xamarin-Modular is available under the MIT license. See the LICENSE file for more info.
 
+## Installation
+
+To install the SDK, please use one of the following methods:
+
+Cloning the Git Repo:
+
+``` https://github.com/Donky-Network/DonkySDK-Xamarin-Modular.git ```
+
+Using [Nuget](https://www.nuget.org/profiles/donky), for example:
+
+``` PM> Install-Package Donky.Core ```
+
+Please see the comprehensive GitHub package installation guide below!
+
+## Support
+
+Please contact sdk@mobiledonky.com if you have any issues with integrating or using this SDK.
+
+## Contribute
+
+We accept pull requests!
+
+
 
