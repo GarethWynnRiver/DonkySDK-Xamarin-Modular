@@ -466,3 +466,18 @@ new
 Whatever the properties that you declare here - and the values that you assign them - will be delivered as Json to the type subscription.
 
 And of course, you can create - and hence receive - as many Custom Notification types as you desire!
+
+## Advanced Quickstarts
+
+Please set up your project using the [Service Setups (All Platforms)](http://docs.mobiledonky.com/docs/service-setups-all-platforms) guide and then go through our other Quickstart guides (see menu), starting with [Set-up Core & Register Users](http://docs.mobiledonky.com/docs/xamarin-setup-core-register-users).
+
+## IoC and DI
+
+Within the SDK, Inversion of Control and Dependency Injection utilises Autofac ([Autofac.org](http://Autofac.org)) however in being so has been wrapped in an interface (IObjectBuilder) so that if the SDK user wishes to utilise an alternative, it will be as easy as implementing IObjectBuilder and swapping implementations in the codebase, from the AutofacObjectBuilder wrapper to the alternative.
+
+## Donky Control
+
+**Have you explored Donky Control yet?**
+
+Although the Xamarin SDK documentation is substantially front-end client documentation, make sure that you have thoroughly explored **Donky Control**, which is your backend portal and is available from the [User Login](http://www.mobiledonky.com).
+
