@@ -22,8 +22,7 @@ The minimal technical requirements for the Donky's Xamarin Modular SDK are:
 
 <ul>
 <li>Xamarin Platform, available at https://xamarin.com/platform</li>
-<li>Either:</li>
-<li>
+<li>Either:<br />
 <ul>
 <li>Xamarin Studio (installed as part of the platform download), or</li>
 <li>Visual Studio Community Edition 2013 or 2015, available at https://www.visualstudio.com/en-us/downloads/</li>
