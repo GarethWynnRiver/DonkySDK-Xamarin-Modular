@@ -63,5 +63,42 @@ Please contact sdk@mobiledonky.com if you have any issues with integrating or us
 
 We accept pull requests!
 
+# Donky-Core-SDK
 
+## Modules
+The Donky Xamarin SDK contains the following modules:
+
+**Donky.Core**<br />
+The Core module provides the basic functionality required for connecting to the Donky Network, handling notifications and sending / receiving custom content. This is provided as a cross-platform PCL. It must be used in conjunction with the relevant platform module (Donky.Core.Xamarin.Android or Donky.Core.Xamarin.IOS) to provide push capabilities, storage capabilities and other contextual information.
+
+**Donky.Core.Xamarin.iOS**<br />
+**Donky.Core.Xamarin.Android**<br />
+These modules provide Core with platform specific functions.
+
+**Donky.Core.Xamarin.Forms**<br />
+If using Xamarin Forms, this module provides a base Application class to aid integration, as well as some base framework for other Forms based functionality.
+
+**Donky.Core.Analytics**<br />
+This module tracks app usage, and passes data to the Donky Network to enable statistics around app opens, time in app and influenced launches.
+
+**Donky.Automation**<br />
+This module provides the ability to execute 3rd Party Triggers on the Donky Network
+
+**Donky.Messaging.Common**<br />
+Provides common functionality that will be used by the logic modules for all message types.
+
+**Donky.Messaging.Push.Logic**<br />
+Logic for handling Simple + Interactive Push messages and passing context back the Donky Network.
+
+**Donky.Messaging.Push.UI.XamarinForms**<br />
+**Donky.Messaging.Push.UI.iOS**<br />
+**Donky.Messaging.Push.UI.Android**<br />
+Provides an optional UI for in-app handling of Simple & Interactive Push. This is still rough in terms of presentation and needs extending to allow customisations of theme + some fixes around layout.
+
+**Donky.Messaging.Rich.Logic**<br />
+Logic for handling Rich Messages.
+
+**Donky.Messaging.Rich.PopupUI.XamarinForms** (still in Private Preview)<br />
+**Donky.Messaging.Rich.PopupUI.Android** (still in Private Preview)<br />
+Optional UI for displaying rich messages in a modal popup when they arrive. For Android, an additional module is required to enable local notifications when a message is received while the app is closed / in the background.￼￼￼￼
 
