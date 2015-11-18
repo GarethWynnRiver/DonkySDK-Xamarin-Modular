@@ -203,3 +203,12 @@ Microsoft.Bcl.Build Version 1.0.21<br />
 Microsoft.Net.Http Version 2.2.28<br />
 Newtonsoft.Json Version 7.0.1<br />
 
+Please note that this list is not comprehensive as third-party libraries will of course pull-in their own dependencies, and by way of example, the dependencies of Xamarin.Forms Version 1.5.0.6446 will pull the following into the Android Host Project:
+
+```
+Xamarin.Android.Support.v4
+Xamarin.Android.Support.v7.AppCompat
+Xamarin.Android.Support.v7.CardView
+Xamarin.Android.Support.v7.MediaRouter 
+```
+
