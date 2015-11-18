@@ -408,3 +408,61 @@ In your Localizable.strings file, add the following:
 //have the %2$@ or vica versa.
 "MSG_PRV" = "%1$@ - %2$@";
 ```
+
+## Basic API Quickstarts
+
+**Async Operations**
+Most calls in the SDK are asynchronous and therefore should be called from async methods in your app.
+
+**Registration Details**
+To provide details about the user or device, you can use the UpdateRegistrationDetailsAsync operation on DonkyCore.Instance.RegistrationController.
+
+**Custom Content**
+If you wish to use Custom notifications, you need to do the following:
+
+  1. Subscribe to custom notification of the required type:
+  
+```
+DonkyCore.Instance.SubscribeToNotifications(
+  new ModuleDefinition("MyApp", "1.0"),
+￼	 new CustomNotificationSubscription
+￼	{
+￼		Type = "MYTYPE",
+	 Handler = notification =>
+￼		{
+￼ 		var customData = notification.Data["customData"];
+￼     // TODO: Whatever is needed!
+   }
+});￼￼
+```
+
+  2. You can either send content using the Network REST APIs or from the SDK using the SendContentNotifications operation:
+
+```
+var notification = new ContentNotification()
+￼			.ForUsers("someuserid")
+￼			.WithCustomContent("MYTYPE", 
+     			new
+￼			{
+￼				myProperty = myValue
+￼			});
+
+await DonkyCore.Instance.NotificationController.SendContentNotifications(
+  notification
+	);
+```
+
+**Don't overlook the power of the Custom Content anonymous declaration that is above!**
+
+*That is:* 
+
+```
+new 
+{ 
+	myProperty = myValue 
+}
+```
+
+Whatever the properties that you declare here - and the values that you assign them - will be delivered as Json to the type subscription.
+
+And of course, you can create - and hence receive - as many Custom Notification types as you desire!
