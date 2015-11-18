@@ -102,3 +102,104 @@ Logic for handling Rich Messages.
 **Donky.Messaging.Rich.PopupUI.Android** (still in Private Preview)<br />
 Optional UI for displaying rich messages in a modal popup when they arrive. For Android, an additional module is required to enable local notifications when a message is received while the app is closed / in the background.￼￼￼￼
 
+## Nuget
+The Xamarin Forms SDK **Nuget Package Repository** is a repository for build artefacts and you can find the SDK's Donky Core and Module libraries [here](https://www.nuget.org/profiles/donky).
+
+If you follow the walk-throughs in the documentation, beginning with the [Set-up Core and Register Users](http://docs.mobiledonky.com/docs/xamarin-setup-core-register-users) guide, you will learn which packages to install for those features you wish to consume. 
+
+There are also some quick-start guides below for those who are already familiar with Nuget.
+
+**Nuget Fast-track**<br />
+You can choose any public module from the above list and simply go:
+
+``` PM> Install-Package namespace ```
+
+Installing the following Donky Modules will cause additional Nuget packages to be loaded into your solution:
+
+n.b. Please note that the versions are the minimum version <br />
+that will be loaded and the Nuget Package Manager typically <br />
+loads the latest version.<br />
+
+**Donky.Core Version 2.2.0** installs:<br />
+Autofac Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.29<br />
+modernhttpclient Version 2.4.2<br />
+Newtonsoft.Json 7.0.1<br />
+
+**Donky.Analytics Version 2.2.0** installs:<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+
+**Donky.Core.Xamarin.Android Version 2.2.0** installs:<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Xam.Plugins.Forms.ImageCircle Version 1.1.4<br />
+Xamarin.Android.Support.v4 Version 22.2.1.0<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Core.Xamarin.Forms Version 2.2.0** installs:<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Core.Xamarin.iOS Version 2.2.0** installs:<br />
+Microsoft.Bcl.BuildV ersion 1.0.21<br />
+Xam.Plugins.Forms.ImageCircle Version 1.1.4<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Messaging.Push.Logic Version 2.2.0** installs:<br />
+Autofac Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.28<br />
+Newtonsoft.Json Version 7.0.1<br />
+
+**Donky.Messaging.Push.UI.Android Version 2.2.0** installs:<br />
+Autofac Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.29<br />
+Newtonsoft.Json Version 7.0.1<br />
+Xamarin.Android.Support.v4 Version 22.2.1.0<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Messaging.Push.UI.iOS Version 2.2.0** installs:<br />
+Autofac Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.29<br />
+Newtonsoft.Json Version 7.0.1<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Messaging.Push.UI.XamarinForms Version 2.2.0** installs:<br />
+Autofac Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl" Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.22<br />
+Newtonsoft.Json Version 7.0.1<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Messaging.Rich.Inbox.XamarinForms (Private Preview)** installs:<br />
+Xam.Plugins.Forms.ImageCircle Version 1.1.4<br />
+Xamarin.Forms Version 1.5.0.6446<br />
+
+**Donky.Messaging.Rich.Logic Version 2.2.0** installs:<br />
+Autofac Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.28<br />
+Newtonsoft.Json Version 7.0.1<br />
+
+**Donky.Messaging.Common Version 2.2.0** installs:<br />
+Autofac  Version 3.5.2<br />
+Microsoft.AspNet.WebApi.Client Version 5.2.3<br />
+Microsoft.Bcl Version 1.1.10<br />
+Microsoft.Bcl.Build Version 1.0.21<br />
+Microsoft.Net.Http Version 2.2.28<br />
+Newtonsoft.Json Version 7.0.1<br />
+
