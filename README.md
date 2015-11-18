@@ -40,7 +40,7 @@ Donky Networks Ltd, sdk@mobiledonky.com
 
 ## License
 
-DonkySDK-Xamarin-Modular is available under the MIT license. See the LICENSE file for more info.
+DonkySDK-Xamarin-Modular is available under the MIT license. See the [LICENSE](https://github.com/Donky-Network/DonkySDK-Xamarin-Modular/blob/master/LICENSE) file for more info.
 
 ## Installation
 
