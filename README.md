@@ -102,7 +102,7 @@ Logic for handling Rich Messages.
 **Donky.Messaging.Rich.PopupUI.Android** (still in Private Preview)<br />
 Optional UI for displaying rich messages in a modal popup when they arrive. For Android, an additional module is required to enable local notifications when a message is received while the app is closed / in the background.￼￼￼￼
 
-## Nuget
+## Nuget Packages
 The Xamarin Forms SDK **Nuget Package Repository** is a repository for build artefacts and you can find the SDK's Donky Core and Module libraries [here](https://www.nuget.org/profiles/donky).
 
 If you follow the walk-throughs in the documentation, beginning with the [Set-up Core and Register Users](http://docs.mobiledonky.com/docs/xamarin-setup-core-register-users) guide, you will learn which packages to install for those features you wish to consume. 
@@ -212,3 +212,199 @@ Xamarin.Android.Support.v7.CardView
 Xamarin.Android.Support.v7.MediaRouter 
 ```
 
+## Source Code (here on GitHub)
+
+If you would prefer to use the source code directly, instead of downloading Donky's Nuget packages, you can download the source here, using the clone command indicated above.
+
+You can determine which namespaces to install for the features that you wish to consume, by following the walk-throughs that commence with the [Set-up Core and Register Users](http://docs.mobiledonky.com/docs/xamarin-setup-core-register-users) guide, although the walk-throughs refer to the Nuget packages, the code projects share the very same namespaces that the Nuget packages are registered under.
+
+For example, where you see the Nuget installation command line:
+
+```
+PM> Install-Package Donky.Core
+```
+
+then reference the **Donky.Core** source-code project in your solution.
+
+**Note:**<br />
+Although referencing a project directly in source code will give you direct access to it, you may wish to look at each project's **packages.config** file to show you which 3rd party Nuget libraries that the project will automatically pull in when all of the Nuget packages are restored during the build process!
+
+# Getting Started
+
+It is recommended that the following Nuget Packages / Source Code Project References, are added to the Xamarin Forms project:
+
+  * Donky.Core.XamarinForms (this will pull in Donky.Core automatically)
+  * Donky.Core.Analytics
+  * Donky.Automation (if needed)
+  * Donky.Messaging.Push.UI.XamarinForms (if using Simple / Interactive Push)
+  * Donky.Messaging.Rich.PopupUI.XamarinForms (if using Rich Popup)
+
+To the iOS and Android projects, add any packages used in the Forms project plus the following:
+
+  * Donky.Core.Xamarin.Android / iOS as appropriate
+  * Donky.Messaging.Push.UI.Android / iOS if needed
+  * Donky.Messaging.Rich.PopupUI.Android if needed 
+  
+## Xamarin Forms Project Quickstart
+
+Within your Xamarin Forms project, make the following changes to integrate Donky:
+
+  * Change the App class to derive from Donky.Core.Xamarin.Forms.DonkyApplication (which in turn derives from Xamarin.Forms.Application)
+  * Create a static bootstrap class (will be called from the native projects) – example:
+ 
+```
+public static class AppBootstrap
+{
+	public static void Initialise()
+	{
+		// Initialise any modules (except Core) here
+		DonkyCoreAnalytics.Initialise();
+		DonkyAutomation.Initialise();
+		DonkyCommonMessaging.Initialise();
+		DonkyPushLogic.Initialise();
+		DonkyRichLogic.Initialise();
+		DonkyRichPopupUIXamarinForms.Initialise();
+		DonkyXamarinForms.Initialise();
+    
+    InitInternal().ExecuteInBackground();
+	￼}
+
+￼ ￼ private static async Task InitInternal()
+￼  {
+￼	  	var result = await DonkyCore.Instance.InitialiseAsync(
+￼								"client API key from Donky Control in here");
+￼	  	if (!result.Success)
+  ￼ 	{
+￼		  	// TODO: Check result for failure info
+￼	  	}
+￼  }
+￼}
+```
+
+## Android Project Quickstart
+
+Within the Android project, if you don’t have an Application class, create one as follows, if you already have this then add the relevant calls to OnCreate:
+
+```
+[Application]
+￼public class DonkyTestApplication : Application
+￼{
+￼		public DonkyTestApplication(
+  		IntPtr handle, 
+  		JniHandleOwnership transfer
+			): base(handle, transfer)
+￼			 {}
+￼
+￼		public override void OnCreate()
+	 {
+￼￼		 base.OnCreate();
+￼￼		 
+     DonkyAndroid.Initialise();
+￼     DonkyPushUIAndroid.Initialise();
+￼     DonkyRichPopupUIAndroid.Initialise();
+￼     AppBootstrap.Initialise();
+   }
+￼￼}
+```
+
+In your Main Activity add the line **DonkyAndroid.ActivityLaunchedWithIntent(this);** to the OnCreate method:
+
+```
+protected override void OnCreate(Bundle bundle)
+￼{
+￼		 base.OnCreate(bundle);
+￼		
+  	// Ensure Donky knows if we were launched from a notification
+￼￼		DonkyAndroid.ActivityLaunchedWithIntent(this);
+￼		 
+    global::Xamarin.Forms.Forms.Init(this, bundle);
+￼		 LoadApplication(new App());
+￼}
+```
+
+Permissions for GCM:
+
+```
+Insert the following into Android.Manifest.xml:
+
+<!-- GCM permissions -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+<permission android:name="PACKAGENAME.permission.C2D_MESSAGE" /> 
+<uses-permission android:name="PACKAGENAME.permission.C2D_MESSAGE" />
+<!-- END GCM permissions -->
+```
+
+## iOS Project Quickstart
+
+For iOS, you need to add the following into the AppDelegate class:
+
+```
+public override bool FinishedLaunching(
+  UIApplication app, 
+  NSDictionary options)
+{
+    Xamarin.Forms.Forms.Init();
+
+    // ImageCircleRenderer.Init(); This is used in the Rich InBox,
+    // which is currently still in Private Preview
+
+    DonkyiOS.Initialise();
+    DonkyPushUIiOS.Initialise();
+    AppBootstrap.Initialise();
+  
+    LoadApplication(new App());
+
+    return base.FinishedLaunching(app, options);
+}
+
+public override void RegisteredForRemoteNotifications(
+  UIApplication application, 
+  NSData deviceToken)
+{
+    DonkyiOS.RegisteredForRemoteNotifications(application, deviceToken);
+}
+
+public override void DidReceiveRemoteNotification(
+  UIApplication application, 
+  NSDictionary userInfo,
+  Action<UIBackgroundFetchResult> completionHandler)
+{
+    DonkyiOS.DidReceiveRemoteNotification(
+      application, 
+      userInfo, 
+      completionHandler);
+}
+
+public override void HandleAction(
+  UIApplication application, 
+  string actionIdentifier,
+  NSDictionary remoteNotificationInfo,
+  Action completionHandler)
+{
+    DonkyiOS.HandleAction(
+      application, 
+      actionIdentifier, 
+      remoteNotificationInfo, 
+      completionHandler);
+}
+
+public override void FailedToRegisterForRemoteNotifications(
+  UIApplication application, 
+  NSError error)
+{
+    DonkyiOS.FailedToRegisterForRemoteNotifications(application, error);
+}
+```
+
+In your Localizable.strings file, add the following:
+
+```
+//For all standard remote notiications:
+//Where the %1$@ is the name of the sender. 
+//You can remove this and simply 
+//have the %2$@ or vica versa.
+"MSG_PRV" = "%1$@ - %2$@";
+```
