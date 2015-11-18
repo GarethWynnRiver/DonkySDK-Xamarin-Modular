@@ -28,6 +28,7 @@ The minimal technical requirements for the Donky's Xamarin Modular SDK are:
 <li>Visual Studio Community Edition 2013 or 2015, available at https://www.visualstudio.com/en-us/downloads/</li>
 </ul>
 </li>
+<li>A free [Donky Control](https://control.mobiledonky.com) account to manage your messaging credentials.</li>
 </ul>
 
 
