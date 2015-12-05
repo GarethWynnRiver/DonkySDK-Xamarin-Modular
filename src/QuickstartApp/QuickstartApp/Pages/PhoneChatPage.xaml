@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<mvvm:PageBase xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:mvvm="clr-namespace:Com.Xamtastic.Patterns.SmallestMvvm;assembly=Com.Xamtastic.Patterns.SmallestMvvm"
+             xmlns:extensions="clr-namespace:QuickstartApp.Extensions;assembly=QuickstartApp"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="QuickstartApp.Pages.PhoneChatPage">
+  <Grid VerticalOptions="FillAndExpand">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!--<Label Grid.Row="0" Text="{Binding MainText}" HorizontalOptions="Center" />-->
+
+    <Label Grid.Row="1" Text="username" HorizontalOptions="Start" />
+
+    <BoxView Grid.Row="2" Color="Purple" Opacity="0.25"  />
+    <Entry Grid.Row="2" Text="{Binding Username, Mode=TwoWay}" BackgroundColor="Transparent" />
+
+    <Label Grid.Row="3" Text="message" HorizontalOptions="Start" />
+
+    <BoxView Grid.Row="4" Color="Purple" Opacity="0.25"  />
+    <Editor Grid.Row="4" Text="{Binding SendMessage, Mode=TwoWay}" BackgroundColor="Transparent" />
+
+    <BoxView Grid.Row="5" Color="Purple" Opacity="0.5"  />
+    <ListView Grid.Row="5" HorizontalOptions="StartAndExpand"
+      ItemsSource="{Binding ReceivedMessages}"
+      SelectedItem="{Binding SelectedReceivedMessage, Mode=TwoWay}"
+      HasUnevenRows="True"
+      >
+      <ListView.ItemTemplate>
+        <DataTemplate>
+          <ViewCell>
+            <ViewCell.View>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="100" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Image Grid.Column="0" Source="{extensions:ImageResource QuickstartApp.Images.DonkyLogo.png}" />
+                <Grid Grid.Column="1">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                  </Grid.RowDefinitions>               
+                   <Label Grid.Column="0" Grid.Row="0" Text="Id:" FontAttributes="Bold" LineBreakMode="NoWrap" />
+                   <Label Grid.Column="2" Grid.Row="0" Text="{Binding customId}" LineBreakMode="TailTruncation" />
+                   <Label Grid.Column="0" Grid.Row="1" Text="From:" FontAttributes="Bold" LineBreakMode="NoWrap" />
+                   <Label Grid.Column="2" Grid.Row="1" Text="{Binding from}" LineBreakMode="TailTruncation" />
+                   <Label Grid.Column="0" Grid.Row="2" Text="To:" FontAttributes="Bold" LineBreakMode="NoWrap" />
+                   <Label Grid.Column="2" Grid.Row="2" Text="{Binding to}" LineBreakMode="TailTruncation" />
+                   <Label Grid.Column="0" Grid.ColumnSpan="3"  Grid.Row="3" Text="{Binding message}" />
+                </Grid>
+              </Grid>
+            </ViewCell.View>
+          </ViewCell>
+        </DataTemplate>
+      </ListView.ItemTemplate>
+    </ListView>
+
+    <Button Grid.Row="6" Command="{Binding SendCommand}" Text="Send" HorizontalOptions="Center" />
+  </Grid>
+</mvvm:PageBase>

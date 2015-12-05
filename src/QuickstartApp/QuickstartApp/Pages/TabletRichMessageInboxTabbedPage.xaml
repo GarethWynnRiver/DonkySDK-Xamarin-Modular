@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TabbedPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:QuickstartApp.Pages;assembly=QuickstartApp"
+             xmlns:views="clr-namespace:QuickstartApp.Views;assembly=QuickstartApp"
+             xmlns:extensions="clr-namespace:QuickstartApp.Extensions;assembly=QuickstartApp"
+             x:Class="QuickstartApp.Pages.TabletRichMessageInboxTabbedPage">
+
+  <TabbedPage.Children>
+    <pages:PhoneRichMessageInboxPage x:Name="Inbox" Title="Inbox" />
+    <pages:TabletChatPage x:Name="Chat" Title ="Chat" />
+  </TabbedPage.Children>
+</TabbedPage>

@@ -14,6 +14,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.ViewModels
 {
     public class RichMessageInboxListViewItemViewModel : ViewModelBase
     {
+        // EllipsesCommand
         private ICommand _selectCommand;
         public ICommand SelectCommand
         {
@@ -25,6 +26,20 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.ViewModels
             {
                 _selectCommand = value;
                 RaisePropertyChanged("SelectCommand");
+            }
+        }
+
+        private ICommand _ellipsesCommand;
+        public ICommand EllipsesCommand
+        {
+            get
+            {
+                return _ellipsesCommand;
+            }
+            set
+            {
+                _ellipsesCommand = value;
+                RaisePropertyChanged("EllipsesCommand");
             }
         }
 
@@ -94,7 +109,8 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.ViewModels
                     var auri = DonkyCore.Instance.GetService<IAssetHelper>().CreateUriForAsset(RichMessage.AvatarAssetId);
                     if(string.IsNullOrEmpty(auri))
                     {
-                        AvatarUri = new Uri("https://dev-client-api.mobiledonky.com/asset/094867f5-24c4-48e0-88e1-1a53d52ca3de%7C20150924%7CNE_DEV_RC1_RG1");
+                        //AvatarUri = new Uri("https://dev-client-api.mobiledonky.com/asset/094867f5-24c4-48e0-88e1-1a53d52ca3de%7C20150924%7CNE_DEV_RC1_RG1");
+                        AvatarUri = new Uri(auri);
                     }
                     else
                     {
@@ -103,6 +119,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.ViewModels
                 }
 
                 RaisePropertyChanged("RichMessage");
+                RaisePropertyChanged("ShareMenuItemText");
             }
         }
 

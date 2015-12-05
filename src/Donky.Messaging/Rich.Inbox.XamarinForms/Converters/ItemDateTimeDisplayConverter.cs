@@ -14,7 +14,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.Converters
         {
             /*
                 [14:24:33] Chris Wunsch: Less than 5 minutes = Just now
-                [14:24:44 | Edited 14:24:45] Chris Wunsch: More than 5 minutes but less than 1 hour = X min ago
+                [14:24:44 | Edited 14:24:45] Chris Wunsch: More than 2 minutes but less than 1 hour = X min ago
                 [14:24:56] Chris Wunsch: more than 1 hour but still on the same day = X hours ago
                 [14:25:08] Chris Wunsch: more than 1 hour but the previous day = yesterday
                 [14:25:16] Chris Wunsch: more than 24 hours (i.e. yesterday) = yesterday
@@ -22,6 +22,8 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.Converters
                 [14:25:43] Chris Wunsch: more than 1 week ago = 22/09/2015             * */
 
             string response = string.Empty;
+
+            var isResponse = false;
 
             var now = DateTime.UtcNow;
             var sent = (DateTime)value;
@@ -32,41 +34,61 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.Converters
             bool wasSentToday = ((sent.Date == now.Date) &&(sent.Month == now.Month) && (sent.Year == now.Year));
             bool wasSentYesterday = sent == DateTime.Now.AddDays(-1);
 
-            bool wasSentGreaterThan1HourAgo = totalMinutesSinceSent > 60;
+            bool wasSentGreaterOrEqualTo1HourAgo = totalMinutesSinceSent >= 60;
             bool wasSentGreaterThan24HoursAgo = (totalHoursSinceSent > 24);
+            bool wasSentGreaterThan48HoursAgo = (totalHoursSinceSent > 48);
             bool wasSentWithinLast7Days = DateTime.Now.Subtract(sent).Days <= 7;
             bool wasSentGreaterThanSevenDaysAgo = DateTime.Now.Subtract(sent).Days > 7;
 
             // Less than 5 minutes = Just now
-            if (totalMinutesSinceSent < 5)
+            if ((totalMinutesSinceSent < 2) && !isResponse)
             {
                 response = "Just now";
+                isResponse = true;
             }
             // More than 5 minutes but less than 1 hour = X min ago
-            if ((totalMinutesSinceSent > 5) && (totalMinutesSinceSent < 60))
+            else if (((totalMinutesSinceSent >= 2) && (totalMinutesSinceSent < 60)) && !isResponse)
             {
                 response = string.Format("{0} min ago", totalMinutesSinceSent.ToString());
+                isResponse = true;
             }
             // more than 1 hour but still on the same day = X hours ago
-            if (wasSentGreaterThan1HourAgo && wasSentToday)
+            else if ((wasSentGreaterOrEqualTo1HourAgo && wasSentToday) && !isResponse)
             {
                 response = string.Format("{0} hours ago", totalHoursSinceSent.ToString());
+                isResponse = true;
             }
             // more than 1 hour but the previous day = yesterday    
-            if (wasSentGreaterThan1HourAgo && wasSentYesterday)
+            else if ((wasSentGreaterOrEqualTo1HourAgo && wasSentYesterday) && !isResponse)
             {
                 response = "yesterday";
+                isResponse = true;
             }
-            // more than 24 hours but less than 1 week ago = Name of day i.e. Tuesday
-            if (wasSentGreaterThan24HoursAgo && wasSentWithinLast7Days)
+            // more than 24 hours ago but less than 48 hours
+            else if ((wasSentGreaterThan24HoursAgo && !wasSentGreaterThan48HoursAgo) && !isResponse)
             {
-                response = (now - sent).ToString("dddd", new CultureInfo("en-GB"));
+                response = "yesterday";
+                isResponse = true;
+            }
+            // more than 48 hours but less than 1 week ago = Name of day i.e. Tuesday
+            else if ((wasSentGreaterThan48HoursAgo && wasSentWithinLast7Days) && !isResponse)
+            {
+                response = sent.DayOfWeek.ToString();
+                isResponse = true;
             }
             // more than 1 week ago = 22/09/2015
-            if (wasSentWithinLast7Days)
+            else if ((wasSentWithinLast7Days) && !isResponse)
             {
                 response = string.Format("{0:dd/MM/yy}", sent);
+                isResponse = true;
             }
+            else
+            {
+                response = string.Format("{0:dd/MM/yy}", sent);
+                isResponse = true;
+            }
+
+
             
             return response;
         }

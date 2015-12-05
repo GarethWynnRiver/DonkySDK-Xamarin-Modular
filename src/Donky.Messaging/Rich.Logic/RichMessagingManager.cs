@@ -15,22 +15,27 @@ using Donky.Core.Framework.Extensions;
 using Donky.Core.Notifications;
 using Donky.Messaging.Common;
 using Donky.Messaging.Rich.Logic.Data;
+using Donky.Core.Configuration;
 
 namespace Donky.Messaging.Rich.Logic
 {
 	internal class RichMessagingManager : IRichMessagingManager
 	{
+        private readonly IConfigurationManager _configurationManager;
 		private readonly IRichDataContext _context;
 		private readonly ICommonMessagingManager _commonMessagingManager;
 		private readonly IJsonSerialiser _serialiser;
 		private readonly IEventBus _eventBus;
 
-		public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus)
+        public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus, IConfigurationManager configurationManager)
 		{
 			_context = context;
 			_commonMessagingManager = commonMessagingManager;
 			_serialiser = serialiser;
 			_eventBus = eventBus;
+            _configurationManager = configurationManager;
+
+            DeleteRichMessageAvailabilityDaysExpirations();
 		}
 
 		public async Task<IEnumerable<RichMessage>> GetAllAsync()
@@ -103,5 +108,31 @@ namespace Donky.Messaging.Rich.Logic
 
 			await _commonMessagingManager.NotifyMessageReceivedAsync(message, notification);
 		}
+
+        private async Task DeleteRichMessageAvailabilityDaysExpirations()
+        {
+            var richMessageAvailabilityDays = _configurationManager.GetValue<string>("RichMessageAvailabilityDays");
+            var timeNow = DateTime.UtcNow;
+
+            var messages = await GetAllAsync();
+
+            List<Guid> deletionQueue = new List<Guid>();
+
+            foreach(var message in messages)
+            {
+                var richMessageReceivedTime = message.ReceivedTimestamp;
+                var richMessageAvailabilityExpiry = ((DateTime)richMessageReceivedTime).AddDays(Convert.ToInt32(richMessageAvailabilityDays));
+
+                if(richMessageAvailabilityExpiry <= timeNow)
+                {
+                    deletionQueue.Add(message.MessageId);
+                }
+            }
+
+            if(deletionQueue.Count > 0)
+            {
+                await DeleteMessagesAsync(deletionQueue.ToArray());
+            }
+        }
 	}
 }

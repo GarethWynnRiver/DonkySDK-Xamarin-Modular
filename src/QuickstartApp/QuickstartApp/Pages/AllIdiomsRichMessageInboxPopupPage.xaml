@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<mvvm:PageBase xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:mvvm="clr-namespace:Com.Xamtastic.Patterns.SmallestMvvm;assembly=Com.Xamtastic.Patterns.SmallestMvvm"
+             xmlns:inbox="clr-namespace:Donky.Messaging.Rich.Inbox.XamarinForms;assembly=Donky.Messaging.Rich.Inbox.XamarinForms"
+             xmlns:inboxConverters="clr-namespace:Donky.Messaging.Rich.Inbox.XamarinForms.Converters;assembly=Donky.Messaging.Rich.Inbox.XamarinForms"
+             xmlns:views="clr-namespace:Donky.Core.Xamarin.Forms.Views;assembly=Donky.Core.Xamarin.Forms"
+             x:Class="QuickstartApp.Pages.AllIdiomsRichMessageInboxPopupPage">
+  <mvvm:PageBase.ToolbarItems>
+    <ToolbarItem Text="{Binding DeleteText}" Command="{Binding DeleteCommand}" Order="Primary" Priority="0" />
+  </mvvm:PageBase.ToolbarItems>
+  <views:DonkyWebView x:Name="WebView" HtmlString="{Binding HTML5}" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" />
+</mvvm:PageBase>

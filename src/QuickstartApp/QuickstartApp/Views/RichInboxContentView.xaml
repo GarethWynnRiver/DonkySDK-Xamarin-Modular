@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:inbox="clr-namespace:Donky.Messaging.Rich.Inbox.XamarinForms;assembly=Donky.Messaging.Rich.Inbox.XamarinForms"
+             xmlns:inboxConverters="clr-namespace:Donky.Messaging.Rich.Inbox.XamarinForms.Converters;assembly=Donky.Messaging.Rich.Inbox.XamarinForms"
+             xmlns:controls="clr-namespace:ImageCircle.Forms.Plugin.Abstractions;assembly=ImageCircle.Forms.Plugin.Abstractions"
+             x:Class="QuickstartApp.Views.RichInboxContentView">
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <inboxConverters:BooleanToColourConverter x:Key="BooleanToColourConverter" />
+      <inboxConverters:ObjectToStringConverter x:Key="ObjectToStringConverter" />
+      <inboxConverters:ItemDateTimeDisplayConverter x:Key="ItemDateTimeDisplayConverter" />
+      <inboxConverters:NewMailDateTimeToVisibilityConverter x:Key="NewMailDateTimeToVisibilityConverter" />
+    </ResourceDictionary>
+  </ContentView.Resources>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Label Grid.Row="0" Text="{Binding MainText}" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center" />
+    <inbox:RichMessageInboxListView
+              HasUnevenRows="True"
+              
+              IsPullToRefreshEnabled="true"
+              RefreshCommand="{Binding RefreshCommand}"
+              IsRefreshing="{Binding IsRefreshing}"
+              Grid.Row="1"
+              ItemsSource="{Binding RichMessages, Mode=TwoWay}"
+              SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+              ShowItemMultiSelector="{Binding ShowItemMultiSelector}"
+      >
+      <inbox:RichMessageInboxListView.ItemTemplate>
+        <DataTemplate>
+          <ViewCell>
+            <ViewCell.ContextActions>
+              <MenuItem Command="{Binding ForwardCommand}" CommandParameter="{Binding .}" Text="Forward" />
+              <MenuItem Command="{Binding ShareCommand}" CommandParameter="{Binding .}" Text="Share" />
+              <MenuItem Command="{Binding DeleteCommand}" CommandParameter="{Binding RichMessage.MessageId}" Text="Delete" IsDestructive="True" />
+            </ViewCell.ContextActions>
+            <Grid HeightRequest="100" BackgroundColor="White">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+              </Grid.RowDefinitions>
+              <BoxView Grid.Column="0" Color="Transparent" WidthRequest="50" HeightRequest="100" IsVisible="{Binding ShowItemMultiSelector}" />
+
+              <Image Grid.Column="0" IsVisible="{Binding UnselectedMultiselect}" WidthRequest="30" HeightRequest="30" Source="{Binding MultiSelectUnselectedCheckboxImageSource}" HorizontalOptions="Center" VerticalOptions="Center">
+                <Image.GestureRecognizers>
+                  <TapGestureRecognizer
+                    Command="{Binding SelectCommand}"
+                    CommandParameter="Unselected" />
+                </Image.GestureRecognizers>
+              </Image>
+              <Image Grid.Column="0" IsVisible="{Binding SelectedMultiselect}" WidthRequest="30" HeightRequest="30" Source="{Binding MultiSelectSelectedCheckboxImageSource}" HorizontalOptions="Center" VerticalOptions="Center">
+                <Image.GestureRecognizers>
+                  <TapGestureRecognizer
+                    Command="{Binding SelectCommand}"
+                    CommandParameter="Selected" />
+                </Image.GestureRecognizers>
+              </Image>
+
+              <Grid Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" MinimumWidthRequest="110" MinimumHeightRequest="110">
+
+                <controls:CircleImage Aspect="AspectFill" Source="{Binding EmailUnreadImageSource}" IsVisible="{Binding RichMessage.ReadTimestamp, Converter={StaticResource NewMailDateTimeToVisibilityConverter}, ConverterParameter=null}">
+                  <controls:CircleImage.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90 </OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.WidthRequest>
+                  <controls:CircleImage.HeightRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90</OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.HeightRequest>
+                </controls:CircleImage>
+
+                <controls:CircleImage Aspect="AspectFill" Source="{Binding EmailReadImageSource}" IsVisible="{Binding RichMessage.ReadTimestamp, Converter={StaticResource NewMailDateTimeToVisibilityConverter}, ConverterParameter=notnull}">
+                  <controls:CircleImage.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90 </OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.WidthRequest>
+                  <controls:CircleImage.HeightRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90</OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.HeightRequest>
+                </controls:CircleImage>
+
+                <controls:CircleImage Aspect="AspectFill" Source="{Binding AvatarUri}" IsVisible="True">
+                  <controls:CircleImage.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90 </OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.WidthRequest>
+                  <controls:CircleImage.HeightRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90</OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.HeightRequest>
+                </controls:CircleImage>
+
+                <controls:CircleImage Aspect="AspectFill" Source="{Binding NewMessageImageSource}" IsVisible="{Binding RichMessage.ReadTimestamp, Converter={StaticResource NewMailDateTimeToVisibilityConverter}, ConverterParameter=null}">
+                  <controls:CircleImage.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90 </OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.WidthRequest>
+                  <controls:CircleImage.HeightRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90</OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </controls:CircleImage.HeightRequest>
+                </controls:CircleImage>
+
+                <Grid IsVisible="{Binding RichMessage.ReadTimestamp, Converter={StaticResource NewMailDateTimeToVisibilityConverter}, ConverterParameter=null}">
+                  <Grid.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90 </OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </Grid.WidthRequest>
+                  <Grid.HeightRequest>
+                    <OnPlatform x:TypeArguments="x:Double">
+                      <OnPlatform.iOS>90</OnPlatform.iOS>
+                      <OnPlatform.Android>90</OnPlatform.Android>
+                      <OnPlatform.WinPhone>90</OnPlatform.WinPhone>
+                    </OnPlatform>
+                  </Grid.HeightRequest>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                  </Grid.RowDefinitions>
+                  <Label Text="NEW" FontSize="Large" FontAttributes="Bold" TextColor="White" VerticalOptions="End" HorizontalOptions="Center" />
+                </Grid>
+
+              </Grid>
+
+              <Grid Grid.Column="2" HorizontalOptions="Fill">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="2" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="2" />
+                </Grid.RowDefinitions>
+                <Label Grid.Row="1" Grid.Column="0" Text="{Binding RichMessage.SenderDisplayName}" FontSize="Small" FontAttributes="Bold" LineBreakMode="NoWrap" VerticalOptions="Fill"  />
+                <Label Grid.Row="1" Grid.Column="1" FontSize="Small" FontAttributes="None" Text="{Binding RichMessage.SentTimestamp, Converter={StaticResource ItemDateTimeDisplayConverter}}" HorizontalOptions="End" />
+                <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding RichMessage.Description}" FontSize="Small" FontAttributes="None" LineBreakMode="WordWrap" VerticalOptions="FillAndExpand"  />
+              </Grid>
+
+            </Grid>
+          </ViewCell>
+        </DataTemplate>
+      </inbox:RichMessageInboxListView.ItemTemplate>
+
+    </inbox:RichMessageInboxListView>
+    <Button Grid.Row="2" Text="Delete Items" IsVisible="{Binding ShowItemMultiSelector}" Command="{Binding DeleteItemsCommand}" HorizontalOptions="Fill" />
+    <Button Grid.Row="3" Text="Toggle Selector" Command="{Binding ToggleSelectorCommand}" HorizontalOptions="Fill" />
+  </Grid>
+</ContentView>
