@@ -66,6 +66,9 @@ namespace Donky.Core.Initialisation
 			RegisterDependencies();
 
 			Builder = builder;
+
+			Logger.Instance = new Logger(true);
+			Logger.EventBus = builder.BuildObject<IEventBus>();
 		}
 
 		private static void RegisterServices()
