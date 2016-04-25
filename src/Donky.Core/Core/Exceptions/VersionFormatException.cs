@@ -8,6 +8,9 @@ namespace Donky.Core.Exceptions
 {
     public class VersionFormatException : Exception
     {
-        public VersionFormatException(string version) : base(string.Format("VersionFormatException: The version {0} is not in the format x.x.x.x where x is a digit. [Donky.Core.Exceptions]")) { }
+	    public VersionFormatException(string version)
+		    : base($"VersionFormatException: The version {version} is not in the format x.x.x.x where x is a digit. [Donky.Core.Exceptions]")
+	    {
+	    }
     }
 }
