@@ -95,23 +95,32 @@ namespace Donky.Core.Registration
             // store app version for ReplaceRegistration calls
             _appVersion = appVersion;
 
-            if (await _registrationContext.GetUser() == null || isReplacement)
-            {
-                // New registration or ReplaceRegistration
-                await RegisterAsync(user, device, appVersion);
-            }
+	        try
+	        {
+		        await _synchroniseLock.WaitAsync();
 
-            if (isReplacement)
-            {
-                // Refresh token
-                await _tokenRefresher.RefreshTokenAsync();
-                _registrationContext.DeviceSecret = Guid.NewGuid().ToString();
-                // Update user details
-                await _registrationContext.SetUser(user);
-                await _registrationContext.SetDevice(device);
-            }
+				if (await _registrationContext.GetUser() == null || isReplacement)
+				{
+					// New registration or ReplaceRegistration
+					await RegisterAsync(user, device, appVersion, true);
+				}
 
-            PublishRegistrationChanged();
+				if (isReplacement)
+				{
+					// Refresh token
+					await _tokenRefresher.RefreshTokenAsync();
+					_registrationContext.DeviceSecret = Guid.NewGuid().ToString();
+					// Update user details
+					await _registrationContext.SetUser(user);
+					await _registrationContext.SetDevice(device);
+				}
+
+				PublishRegistrationChanged();
+			}
+			finally
+	        {
+		        _synchroniseLock.Release();
+	        }
         }
 
         public async Task UpdatePushRegistrationAsync(RemoteChannelDetails details)
@@ -120,22 +129,26 @@ namespace Donky.Core.Registration
             {
                 return;
             }
+	        try
+	        {
+				await _synchroniseLock.WaitAsync();
 
-            await _synchroniseLock.WaitAsync();
+				var existingDetails = await _registrationContext.GetRemoteChannelDetails();
+				if (existingDetails == null || existingDetails.Token != details.Token)
+				{
+					if (!string.IsNullOrEmpty(details.Token))
+					{
+						await _secureRegistrationService.UpdatePushRegistrationAsync(await CreatePushConfiguration(details));
 
-            var existingDetails = await _registrationContext.GetRemoteChannelDetails();
-            if (existingDetails == null || existingDetails.Token != details.Token)
-            {
-                if (!string.IsNullOrEmpty(details.Token))
-                {
-                    await _secureRegistrationService.UpdatePushRegistrationAsync(await CreatePushConfiguration(details));
-
-                    await _registrationContext.SetRemoteChannelDetails(details);
-                }
-            }
-
-            _synchroniseLock.Release();
-        }
+						await _registrationContext.SetRemoteChannelDetails(details);
+					}
+				}
+			}
+			finally
+	        {
+				_synchroniseLock.Release();
+			}
+		}
 
         public async Task ReplaceRegistrationAsync(UserDetails user, DeviceDetails device)
         {
@@ -144,29 +157,32 @@ namespace Donky.Core.Registration
 
         public async Task<bool> ReregisterWithExistingDetailsAsync()
         {
-            await _synchroniseLock.WaitAsync();
+	        try
+	        {
+				await _synchroniseLock.WaitAsync();
 
-            var existingDetails = await GetRegistrationDetailsAsync();
+				var existingDetails = await GetRegistrationDetailsAsync();
 
-            if (existingDetails != null)
-            {
-                // Force a new secret to be generated
-                _registrationContext.DeviceSecret = null;
-                
-                // We have some details, re-register
-                await
-                    RegisterAsync(existingDetails.UserDetails, existingDetails.DeviceDetails,
-                        _registrationContext.AppVersion);
+				if (existingDetails != null)
+				{
+					// Force a new secret to be generated
+					_registrationContext.DeviceSecret = null;
 
-                _synchroniseLock.Release();
+					// We have some details, re-register
+					await
+						RegisterAsync(existingDetails.UserDetails, existingDetails.DeviceDetails,
+							_registrationContext.AppVersion, true);
 
-                return true;
-            }
+					return true;
+				}
 
-            _synchroniseLock.Release();
-
-            return false;
-        }
+				return false;
+			}
+			finally
+	        {
+				_synchroniseLock.Release();
+			}
+		}
 
         public async Task<bool> GetIsRegisteredAsync()
         {
@@ -188,52 +204,57 @@ namespace Donky.Core.Registration
         {
             return await ApiResult.ForOperationAsync(async () =>
             {
-                await _synchroniseLock.WaitAsync();
+	            try
+	            {
+					await _synchroniseLock.WaitAsync();
 
-                if (user == null && device == null)
-                {
-                    throw new ArgumentException("user or device must be specified");
-                }
+					if (user == null && device == null)
+					{
+						throw new ArgumentException("user or device must be specified");
+					}
 
-                var existingUser = await _registrationContext.GetUser();
-                var wasAnonymous = existingUser.IsAnonymous;
-                var oldUserId = existingUser.UserId;
+					var existingUser = await _registrationContext.GetUser();
+					var wasAnonymous = existingUser.IsAnonymous;
+					var oldUserId = existingUser.UserId;
 
-                if (user != null && device != null)
-                {
-                    // Composite update
-                    var isAnonymous = wasAnonymous && oldUserId == user.UserId;
-                    
-                    await _secureRegistrationService.UpdateRegistrationAsync(new RegistrationDetail
-                    {
-                        Client = CreateClientDetail(),
-                        Device = await CreateServiceDevice(device),
-                        User = CreateServiceUser(user)
-                    });
+					if (user != null && device != null)
+					{
+						// Composite update
+						var isAnonymous = wasAnonymous && oldUserId == user.UserId;
 
-                    await UpdateUserInContext(user, user.UserId, isAnonymous);
-                    await UpdateDeviceInContext(device);
-                }
-                else if (user != null)
-                {
-                    var isAnonymous = wasAnonymous && oldUserId == user.UserId;
+						await _secureRegistrationService.UpdateRegistrationAsync(new RegistrationDetail
+						{
+							Client = CreateClientDetail(),
+							Device = await CreateServiceDevice(device),
+							User = CreateServiceUser(user)
+						});
 
-                    // User only update
-                    await _secureRegistrationService.UpdateUserAsync(CreateServiceUser(user));
+						await UpdateUserInContext(user, user.UserId, isAnonymous);
+						await UpdateDeviceInContext(device);
+					}
+					else if (user != null)
+					{
+						var isAnonymous = wasAnonymous && oldUserId == user.UserId;
 
-                    await UpdateUserInContext(user, user.UserId, isAnonymous);
-                }
-                else
-                {
-                    // Device only update
-                    await _secureRegistrationService.UpdateDeviceAsync(await CreateServiceDevice(device));
+						// User only update
+						await _secureRegistrationService.UpdateUserAsync(CreateServiceUser(user));
 
-                    await UpdateDeviceInContext(device);
-                }
+						await UpdateUserInContext(user, user.UserId, isAnonymous);
+					}
+					else
+					{
+						// Device only update
+						await _secureRegistrationService.UpdateDeviceAsync(await CreateServiceDevice(device));
 
-                PublishRegistrationChanged();
+						await UpdateDeviceInContext(device);
+					}
 
-                _synchroniseLock.Release();
+					PublishRegistrationChanged();
+				}
+	            finally
+	            {
+	                _synchroniseLock.Release();
+	            }
             }, "UpdateRegistrationDetailsAsync");
         }
 
@@ -244,79 +265,103 @@ namespace Donky.Core.Registration
                 return null;
             }
 
-            await _synchroniseLock.WaitAsync();
+	        try
+	        {
+				await _synchroniseLock.WaitAsync();
 
-            var tags = await _secureRegistrationService.GetTagsAsync();
+				var tags = await _secureRegistrationService.GetTagsAsync();
 
-            _synchroniseLock.Release();
+				return tags.Select(t => new TagOption
+				{
+					IsSelected = t.IsSelected,
+					Value = t.Value
+				}).ToList();
+			}
+			finally
+	        {
+				_synchroniseLock.Release();
 
-            return tags.Select(t => new TagOption
-            {
-                IsSelected = t.IsSelected,
-                Value = t.Value
-            }).ToList();
+			}
         }
 
         public async Task<ApiResult> SetTagsAsync(List<TagOption> tags)
         {
             return await ApiResult.ForOperationAsync(async () =>
             {
-                await _synchroniseLock.WaitAsync();
+	            try
+	            {
+					await _synchroniseLock.WaitAsync();
 
-                if (tags == null)
-                {
-                    throw new ArgumentNullException("tags");
-                }
+					if (tags == null)
+					{
+						throw new ArgumentNullException("tags");
+					}
 
-                await _secureRegistrationService
-                    .PutTagsAsync(tags.Select(t => new Services.Registration.TagOption
-                    {
-                        IsSelected = t.IsSelected,
-                        Value = t.Value
-                    }).ToList());
+					await _secureRegistrationService
+						.PutTagsAsync(tags.Select(t => new Services.Registration.TagOption
+						{
+							IsSelected = t.IsSelected,
+							Value = t.Value
+						}).ToList());
 
-                var user = await _registrationContext.GetUser();
-                user.SelectedTags = tags.Where(t => t.IsSelected).Select(t => t.Value).ToArray();
-
-                _synchroniseLock.Release();
-            }, "SetTagsAsync");
+					var user = await _registrationContext.GetUser();
+					user.SelectedTags = tags.Where(t => t.IsSelected).Select(t => t.Value).ToArray();
+				}
+				finally
+	            {
+					_synchroniseLock.Release();
+				}
+			}, "SetTagsAsync");
         }
 
-        private async Task RegisterAsync(UserDetails user, DeviceDetails device, string appVersion)
+        private async Task RegisterAsync(UserDetails user, DeviceDetails device, string appVersion, bool alreadyLocked = false)
         {
-            await _synchroniseLock.WaitAsync();
+	        try
+	        {
+		        if (!alreadyLocked)
+		        {
+			        await _synchroniseLock.WaitAsync();
+		        }
 
-            var isAnonymous = user == null || string.IsNullOrEmpty(user.UserId);
+		        var isAnonymous = user == null || string.IsNullOrEmpty(user.UserId);
 
-            _logger.LogInformation("Starting registration for user: {0}",
-                isAnonymous ? "(anonymous)" : user.UserId);
+		        _logger.LogInformation("Starting registration for user: {0}",
+			        isAnonymous ? "(anonymous)" : user.UserId);
 
-            var request = new RegistrationDetail
-            {
-                Client = CreateClientDetail(appVersion),
-                Device = await CreateServiceDevice(device),
-                User = user == null
-                    ? null
-                    : CreateServiceUser(user)
-            };
+		        var request = new RegistrationDetail
+		        {
+			        Client = CreateClientDetail(appVersion),
+			        Device = await CreateServiceDevice(device),
+			        User = user == null
+				        ? null
+				        : CreateServiceUser(user)
+		        };
 
-            var response = await _publicRegistrationService.RegisterAsync(request);
-            await UpdateUserInContext(user, response.UserId, isAnonymous);
+		        var response = await _publicRegistrationService.RegisterAsync(request);
+		        await UpdateUserInContext(user, response.UserId, isAnonymous);
 
-            await UpdateDeviceInContext(device);
-            _registrationContext.NetworkId = response.NetworkId;
+		        await UpdateDeviceInContext(device);
+		        _registrationContext.NetworkId = response.NetworkId;
 
-            _serviceContext.UpdateFromAccessDetail(response.AccessDetails);
-            await _configurationManager.UpdateConfigurationAsync(
-                response.AccessDetails.Configuration.ConfigurationItems,
-                response.AccessDetails.Configuration.ConfigurationSets);
+		        _serviceContext.UpdateFromAccessDetail(response.AccessDetails);
+		        await _configurationManager.UpdateConfigurationAsync(
+			        response.AccessDetails.Configuration.ConfigurationItems,
+			        response.AccessDetails.Configuration.ConfigurationSets);
 
-            _logger.LogInformation("Registered successfully.  NetworkId: {0}",
-                response.NetworkId);
+		        _logger.LogInformation("Registered successfully.  NetworkId: {0}",
+			        response.NetworkId);
 
-            _logger.LogDebug("New token expiry time: {0}", response.AccessDetails.ExpiresOn);
-            _synchroniseLock.Release();
-        }
+		        _logger.LogDebug("New token expiry time: {0}", response.AccessDetails.ExpiresOn);
+
+	        }
+	        finally
+	        {
+		        if (!alreadyLocked)
+		        {
+					_synchroniseLock.Release();
+				}
+			}
+		}
 
         private ClientDetail CreateClientDetail(string appVersion = null)
         {
@@ -440,7 +485,6 @@ namespace Donky.Core.Registration
                 await _eventBus.PublishAsync(new RegistrationChangedEvent(registrationDetails));
             }
         }
-
 
         public string NotificationSoundFilename { get; set; }
        

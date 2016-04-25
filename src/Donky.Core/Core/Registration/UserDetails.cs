@@ -53,16 +53,14 @@ namespace Donky.Core.Registration
 			EmailAddress = source.EmailAddress;
 			MobileNumber = source.MobileNumber;
 			CountryCode = source.CountryCode;
-			AvatarAssetId = source.CountryCode;
+			AvatarAssetId = source.AvatarAssetId;
 			SelectedTags = source.SelectedTags == null
 				? new string[0]
 				: source.SelectedTags.ToArray();
-			AdditionalProperties = source.AdditionalProperties == null
-				? null
-				: source.AdditionalProperties.ToDictionary(
-					s => s.Key,
-					s => s.Value
-					);
+			AdditionalProperties = source.AdditionalProperties?.ToDictionary(
+				s => s.Key,
+				s => s.Value
+				);
 		}
 
 		/// <summary>
