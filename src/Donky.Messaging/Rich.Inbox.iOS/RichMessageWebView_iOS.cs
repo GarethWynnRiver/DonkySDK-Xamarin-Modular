@@ -23,7 +23,7 @@ namespace Donky.Messaging.Rich.Inbox.iOS
 
             var webview = this;
             webview.AutoresizingMask = UIViewAutoresizing.FlexibleDimensions;
-            webview.ScalesPageToFit;
+            webview.ScalesPageToFit = true;
         }
     }
 }

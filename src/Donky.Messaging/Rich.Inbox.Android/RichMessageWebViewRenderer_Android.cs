@@ -13,6 +13,7 @@ using Xamarin.Forms.Platform.Android;
 using Donky.Messaging.Rich.Inbox.Android;
 using Donky.Messaging.Rich.Inbox.XamarinForms;
 using Android.Webkit;
+using Xamarin.Forms;
 
 [assembly: ExportRenderer(typeof(RichMessageWebView), typeof(RichMessageWebViewRenderer_Android))]
 
@@ -21,7 +22,7 @@ namespace Donky.Messaging.Rich.Inbox.Android
     [Preserve]
     public class RichMessageWebViewRenderer_Android : WebViewRenderer
     {
-        protected override void OnElementChanged(ElementChangedEventArgs<WebView> e)
+        protected override void OnElementChanged(ElementChangedEventArgs<Xamarin.Forms.WebView> e)
         {
             base.OnElementChanged(e);
 
