@@ -99,7 +99,8 @@ namespace Donky.Core.Registration
 	        {
 		        await _synchroniseLock.WaitAsync();
 
-				if (await _registrationContext.GetUser() == null || isReplacement)
+				var existingUser = await _registrationContext.GetUser();
+				if (existingUser == null || isReplacement)
 				{
 					// New registration or ReplaceRegistration
 					await RegisterAsync(user, device, appVersion, true);
@@ -192,11 +193,13 @@ namespace Donky.Core.Registration
 
         public async Task<RegistrationDetails> GetRegistrationDetailsAsync()
         {
-            // Make sure to clone the details here.
-            return new RegistrationDetails
-            {
-                UserDetails = new UserDetails(await _registrationContext.GetUser()),
-                DeviceDetails = new DeviceDetails(await _registrationContext.GetDevice())
+			// Make sure to clone the details here.
+			var userDetails = await _registrationContext.GetUser();
+			var deviceDetails = await _registrationContext.GetDevice();
+			return new RegistrationDetails
+			{
+                UserDetails = new UserDetails(userDetails),
+                DeviceDetails = new DeviceDetails(deviceDetails)
             };
         }
 
