@@ -42,9 +42,10 @@ namespace Donky.Core.Framework.Extensions
 		/// <param name="task">The task.</param>
 		public static void ExecuteInBackground(this Task task)
 		{
+			var logger = Logger ?? Logging.Logger.Instance;
 			Task.Run(() => task)
 				.ContinueWith(
-					t => Logger.LogError(t.Exception, "Background task threw exception"),
+					t => logger.LogError(t.Exception, "Background task threw exception"),
 					TaskContinuationOptions.OnlyOnFaulted);
 		}
 		
