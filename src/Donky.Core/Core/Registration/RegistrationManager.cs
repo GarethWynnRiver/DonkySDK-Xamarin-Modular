@@ -354,6 +354,8 @@ namespace Donky.Core.Registration
 		        _logger.LogInformation("Registered successfully.  NetworkId: {0}",
 			        response.NetworkId);
 
+				PublishRegistrationChanged();
+
 		        _logger.LogDebug("New token expiry time: {0}", response.AccessDetails.ExpiresOn);
 
 	        }
