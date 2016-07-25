@@ -51,6 +51,7 @@
     <Compile Include="ViewModels\PropertyChangedBase.cs" />
     <Compile Include="ViewModels\RichMessageInboxListViewItemModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="DonkyRichInboxXamarinForms.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Donky.Core\Core\Donky.Core.csproj">
