@@ -252,6 +252,14 @@ namespace Donky.Core
 					}
 				}
 				);
+
+			SubscribeToLocalEvent<AppOpenEvent>(async e =>
+			{
+				if (IsInitialised && await RegistrationController.GetIsRegisteredAsync())
+				{
+					await NotificationController.SynchroniseAsync();
+				}
+			});
 		}
 
 		private void ThrowIfNotInitialised()
