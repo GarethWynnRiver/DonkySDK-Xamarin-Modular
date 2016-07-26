@@ -18,6 +18,7 @@ namespace Donky.Core.Xamarin.iOS
 	internal class iOSEnvironmentInformation : IEnvironmentInformation
 	{
 		private const string DONKY_DEVICE_ID = "DonkyDeviceId";
+		private static readonly object _deviceIdLock = new object();
 
 		public iOSEnvironmentInformation()
 		{
@@ -37,25 +38,28 @@ namespace Donky.Core.Xamarin.iOS
 		{
 			get
 			{
-				string deviceId;
-				var record = new SecRecord(SecKind.GenericPassword)
+				lock(_deviceIdLock)
 				{
-					Service = DONKY_DEVICE_ID
-				};
-
-				var match = SecKeyChain.QueryAsData(record);
-				if (match != null)
-				{
-					deviceId = match.ToString();
+					string deviceId;
+					var record = new SecRecord(SecKind.GenericPassword)
+					{
+						Service = DONKY_DEVICE_ID
+					};
+					
+					var match = SecKeyChain.QueryAsData(record);
+					if (match != null)
+					{
+						deviceId = match.ToString();
+					}
+					else
+					{
+						deviceId = Guid.NewGuid().ToString();
+						record.ValueData = NSData.FromString(deviceId);
+						SecKeyChain.Add(record);
+					}
+					
+					return deviceId;
 				}
-				else
-				{
-					deviceId = Guid.NewGuid().ToString();
-					record.ValueData = NSData.FromString(deviceId);
-					SecKeyChain.Add(record);
-				}
-
-				return deviceId;
 			}
 		}
 
