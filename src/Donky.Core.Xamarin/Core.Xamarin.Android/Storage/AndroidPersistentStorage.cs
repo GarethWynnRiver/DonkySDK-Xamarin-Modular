@@ -104,7 +104,10 @@ namespace Donky.Core.Xamarin.Android.Storage
 								using (var reader = new StreamReader(file))
 								{
 									var data = await reader.ReadToEndAsync();
-									return _serialiser.Deserialise<T>(data);
+									if (!String.IsNullOrEmpty(data))
+									{
+										return _serialiser.Deserialise<T>(data);
+									}
 								}
 							}
 						}

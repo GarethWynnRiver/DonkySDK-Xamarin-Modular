@@ -31,6 +31,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Donky.Core.Configuration;
+using Donky.Core.Exceptions;
 using Donky.Core.Framework;
 using Donky.Core.Framework.Events;
 using Donky.Core.Framework.Extensions;
@@ -96,27 +97,9 @@ namespace Donky.Core.Registration
             _appVersion = appVersion;
 
 	        try
-	        {
-		        await _synchroniseLock.WaitAsync();
-
-				var existingUser = await _registrationContext.GetUser();
-				if (existingUser == null || isReplacement)
-				{
-					// New registration or ReplaceRegistration
-					await RegisterAsync(user, device, appVersion, true);
-				}
-
-				if (isReplacement)
-				{
-					// Refresh token
-					await _tokenRefresher.RefreshTokenAsync();
-					_registrationContext.DeviceSecret = Guid.NewGuid().ToString();
-					// Update user details
-					await _registrationContext.SetUser(user);
-					await _registrationContext.SetDevice(device);
-				}
-
-				PublishRegistrationChanged();
+			{
+				await _synchroniseLock.WaitAsync();
+				await EnsureRegisteredWithoutLockAsync(user, device, appVersion, isReplacement);
 			}
 			finally
 	        {
@@ -124,7 +107,7 @@ namespace Donky.Core.Registration
 	        }
         }
 
-        public async Task UpdatePushRegistrationAsync(RemoteChannelDetails details)
+		public async Task UpdatePushRegistrationAsync(RemoteChannelDetails details)
         {
             if (details == null)
             {
@@ -198,8 +181,8 @@ namespace Donky.Core.Registration
 			var deviceDetails = await _registrationContext.GetDevice();
 			return new RegistrationDetails
 			{
-                UserDetails = new UserDetails(userDetails),
-                DeviceDetails = new DeviceDetails(deviceDetails)
+                UserDetails = userDetails == null ? null : new UserDetails(userDetails),
+                DeviceDetails = deviceDetails == null ? null : new DeviceDetails(deviceDetails)
             };
         }
 
@@ -225,13 +208,28 @@ namespace Donky.Core.Registration
 						// Composite update
 						var isAnonymous = wasAnonymous && oldUserId == user.UserId;
 
-						await _secureRegistrationService.UpdateRegistrationAsync(new RegistrationDetail
+						try
 						{
-							Client = CreateClientDetail(),
-							Device = await CreateServiceDevice(device),
-							User = CreateServiceUser(user)
-						});
-
+							await _secureRegistrationService.UpdateRegistrationAsync(new RegistrationDetail
+							{
+								Client = CreateClientDetail(),
+								Device = await CreateServiceDevice(device),
+								User = CreateServiceUser(user)
+							});
+						}
+						catch (ValidationException ex)
+						{
+							if (ex.ValidationFailures.Count == 1 && ex.ValidationFailures.Single().FailureKey == "UserIdAlreadyTaken")
+							{
+								Logger.Instance.LogInformation("UserId {0} is already taken.  Starting ReplaceRegistration flow.", user.UserId);
+								await EnsureRegisteredWithoutLockAsync(user, device, _appVersion, true);
+								return;
+							}
+							else
+							{
+								throw;
+							}
+						}
 						await UpdateUserInContext(user, user.UserId, isAnonymous);
 						await UpdateDeviceInContext(device);
 					}
@@ -317,7 +315,26 @@ namespace Donky.Core.Registration
 			}, "SetTagsAsync");
         }
 
-        private async Task RegisterAsync(UserDetails user, DeviceDetails device, string appVersion, bool alreadyLocked = false)
+		private async Task EnsureRegisteredWithoutLockAsync(UserDetails user, DeviceDetails device, string appVersion, bool isReplacement)
+		{
+			var existingUser = await _registrationContext.GetUser();
+			if (existingUser == null || isReplacement)
+			{
+				// New registration or ReplaceRegistration
+				await RegisterAsync(user, device, appVersion, true);
+			}
+
+			if (isReplacement)
+			{
+				// Refresh token
+				await _tokenRefresher.RefreshTokenAsync();
+				_registrationContext.DeviceSecret = Guid.NewGuid().ToString();
+			}
+
+			PublishRegistrationChanged();
+		}
+
+		private async Task RegisterAsync(UserDetails user, DeviceDetails device, string appVersion, bool alreadyLocked = false)
         {
 	        try
 	        {

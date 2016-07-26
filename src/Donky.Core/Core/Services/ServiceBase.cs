@@ -378,7 +378,7 @@ namespace Donky.Core.Services
             {
                 builder.AppendFormat("\t{0} - {1}", failure.Property, failure.Details);
             }
-            Logger.Instance.LogError(builder.ToString());
+            Logger.Instance.LogWarning(builder.ToString());
         }
 
         private static void HandlePublicUnauthorisedResponse()
