@@ -5,6 +5,7 @@
 //  Copyright:       Donky Networks Ltd 2015
 // ///////////////////////////////////////////////////////////////////////////////////////////
 
+using System;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -44,6 +45,11 @@ namespace Donky.Core.Xamarin.Android.Gcm
 		{
 			try
 			{
+				if (intent == null || intent.Action == null)
+				{
+					return;
+				}
+
 				Context context = this.ApplicationContext;
 				string action = intent.Action;
 
@@ -55,6 +61,11 @@ namespace Donky.Core.Xamarin.Android.Gcm
 				{
 					HandleMessage(context, intent);
 				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Instance.LogError(ex, "Exception caught in DonkyGcmIntentService.OnHandleIntent for action {0}",
+										 intent?.Action);
 			}
 			finally
 			{
