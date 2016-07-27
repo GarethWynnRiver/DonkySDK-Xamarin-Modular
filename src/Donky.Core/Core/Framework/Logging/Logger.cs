@@ -221,21 +221,35 @@ namespace Donky.Core.Framework.Logging
 				return;
 			}
 
-			try
+			var attempt = 0;
+			const int maxAttempts = 3;
+			var written = false;
+			do
 			{
-				_fileLock.Wait();
-				using (var storage = StorageFactory.Value.GetUserStore(LOG_FOLDER))
+				attempt++;
+				try
 				{
-					using (var writer = GetLogWriter(storage))
+					_fileLock.Wait();
+					using (var storage = StorageFactory.Value.GetUserStore(LOG_FOLDER))
 					{
-						writer.WriteLine(fullMessage);
+						using (var writer = GetLogWriter(storage))
+						{
+							writer.WriteLine(fullMessage);
+							written = true;
+						}
 					}
 				}
+				catch (IOException) when (attempt < maxAttempts)
+				{
+					// occasionally see Sharing violation here.  Suspect that log file changes are not releasing 
+					// handles immediately in all cases.
+				}
+				finally
+				{
+					_fileLock.Release();
+				}
 			}
-			finally
-			{
-				_fileLock.Release();
-			}
+			while (!written && attempt < maxAttempts);
 		}
 
 		private StreamWriter GetLogWriter(IFileStorage storage)
