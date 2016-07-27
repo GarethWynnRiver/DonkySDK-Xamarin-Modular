@@ -188,6 +188,7 @@
     <Compile Include="Registration\UserDetails.cs" />
     <Compile Include="Startup\IStartupManager.cs" />
     <Compile Include="Startup\StartupManager.cs" />
+    <Compile Include="Registration\UserUpdatedData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Collections.Concurrent">

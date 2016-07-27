@@ -250,6 +250,12 @@ namespace Donky.Core
 
 						return Task.FromResult(0);
 					}
+				},
+				new DonkyNotificationSubscription
+				{
+					Type = "UserUpdated",
+					AutoAcknowledge = true,
+					Handler = _registrationManager.HandleUserUpdatedAsync
 				}
 				);
 

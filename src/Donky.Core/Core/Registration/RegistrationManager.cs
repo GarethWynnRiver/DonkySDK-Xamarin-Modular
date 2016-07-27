@@ -36,6 +36,7 @@ using Donky.Core.Framework;
 using Donky.Core.Framework.Events;
 using Donky.Core.Framework.Extensions;
 using Donky.Core.Framework.Logging;
+using Donky.Core.Notifications;
 using Donky.Core.Notifications.Remote;
 using Donky.Core.Services;
 using Donky.Core.Services.Authentication;
@@ -58,6 +59,7 @@ namespace Donky.Core.Registration
         private readonly ISdkInformation _sdkInformation;
         private readonly ISecureRegistrationService _secureRegistrationService;
         private readonly IServiceContext _serviceContext;
+		private readonly IJsonSerialiser _serialiser;
 
         private readonly SemaphoreSlim _synchroniseLock = new SemaphoreSlim(1);
         private readonly IRefreshToken _tokenRefresher;
@@ -75,7 +77,8 @@ namespace Donky.Core.Registration
             IConfigurationManager configurationManager,
             IEventBus eventBus, 
             IRefreshToken tokenRefresher, 
-            ILogger logger)
+            ILogger logger,
+			IJsonSerialiser serialiser)
         {
             _registrationContext = registrationContext;
             _moduleManager = moduleManager;
@@ -88,6 +91,7 @@ namespace Donky.Core.Registration
             _eventBus = eventBus;
             _tokenRefresher = tokenRefresher;
             _logger = logger;
+			_serialiser = serialiser;
         }
 
         public async Task EnsureRegisteredAsync(UserDetails user, DeviceDetails device, string appVersion,
@@ -315,6 +319,29 @@ namespace Donky.Core.Registration
 			}, "SetTagsAsync");
         }
 
+		public async Task HandleUserUpdatedAsync(ServerNotification notification)
+		{
+			var userDetails = await _registrationContext.GetUser();
+			var data = _serialiser.Deserialise<UserUpdatedData>(notification.Data.ToString());
+			if (data != null)
+			{
+				userDetails = userDetails ?? new UserDetails();
+				userDetails.AdditionalProperties = data.AdditionalProperties;
+				userDetails.AvatarAssetId = data.AvatarAssetId;
+				userDetails.CountryCode = data.CountryIsoCode;
+				userDetails.DisplayName = data.DisplayName;
+				userDetails.EmailAddress = data.EmailAddress;
+				userDetails.FirstName = data.FirstName;
+				userDetails.IsAnonymous = data.IsAnonymous;
+				userDetails.LastName = data.LastName;
+				userDetails.MobileNumber = data.PhoneNumber;
+				userDetails.SelectedTags = data.SelectedTags.ToArray();
+				userDetails.UserId = !String.IsNullOrEmpty(data.NewExternalUserId) ? data.NewExternalUserId : data.ExternalUserId;
+				await _registrationContext.SetUser(userDetails);
+				PublishRegistrationChanged();
+			}
+		}
+
 		private async Task EnsureRegisteredWithoutLockAsync(UserDetails user, DeviceDetails device, string appVersion, bool isReplacement)
 		{
 			var existingUser = await _registrationContext.GetUser();
@@ -508,7 +535,7 @@ namespace Donky.Core.Registration
             }
         }
 
-        public string NotificationSoundFilename { get; set; }
+		public string NotificationSoundFilename { get; set; }
        
     }
 }

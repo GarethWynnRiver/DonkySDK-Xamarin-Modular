@@ -147,7 +147,8 @@ namespace Donky.Core.Initialisation
 					c.Resolve<IConfigurationManager>(),
 					c.Resolve<IEventBus>(),
                     c.Resolve<IRefreshToken>(),
-                    c.Resolve<ILogger>()
+                    c.Resolve<ILogger>(),
+					c.Resolve<IJsonSerialiser>()
                     ))
 				.As<IRegistrationManager>()
 				.SingleInstance();
