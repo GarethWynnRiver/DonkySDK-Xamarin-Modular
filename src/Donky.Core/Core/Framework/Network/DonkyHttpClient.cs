@@ -86,8 +86,13 @@ namespace Donky.Core.Framework.Network
 				Logging.Logger.Instance.LogWarning("Request to {0} was cancelled following a timeout", request.Uri);
 				isCancelled = true;
             }
+			catch (TaskCanceledException ex)
+			{
+				Logging.Logger.Instance.LogWarning("Request to {0} was cancelled, reason: {1}", request.Uri, ex.Message);
+				isCancelled = true;
+			}
 
-            HttpResponse<TResponse> response = new HttpResponse<TResponse>();
+			HttpResponse<TResponse> response = new HttpResponse<TResponse>();
 
             if (!isCancelled)
             {
