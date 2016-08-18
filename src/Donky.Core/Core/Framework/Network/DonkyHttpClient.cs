@@ -40,8 +40,6 @@ namespace Donky.Core.Framework.Network
 	{
 		private readonly JsonMediaTypeFormatter _formatter;
 		private readonly HttpClient _client;
-		private int _activeCalls;
-		private readonly object _trackingLock = new object();
 
 		internal DonkyHttpClient()
 		{
