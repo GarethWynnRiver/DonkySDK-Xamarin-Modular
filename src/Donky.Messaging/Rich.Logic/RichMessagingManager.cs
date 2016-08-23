@@ -78,7 +78,17 @@ namespace Donky.Messaging.Rich.Logic
 				await _context.RichMessages.DeleteAsync(id);
 			}
 
+			_eventBus.PublishAsync(new RichMessageDeletedEvent(messageIds, DonkyRichLogic.Module))
+			         .ExecuteInBackground();
+
 			await _context.SaveChangesAsync();
+		}
+
+		public async Task DeleteAllMessagesAsync()
+		{
+			var data = await _context.RichMessages.GetAllAsync();
+			var toDelete = data.Select(m => m.Message.MessageId).ToArray();
+			await DeleteMessagesAsync(toDelete);
 		}
 
 		public async Task HandleRichMessageAsync(ServerNotification notification)

@@ -30,7 +30,7 @@ namespace Donky.Messaging.Rich.Logic
 		/// Initialises the Donky Rich Logic module.
 		/// </summary>
 		/// <exception cref="System.InvalidOperationException">DonkyRichLogic is already initialised</exception>
-		public static void Initialise()
+		public static void Initialise(bool clearInboxOnRegistrationChange = false)
 		{
 			lock (Lock)
 			{
@@ -54,6 +54,12 @@ namespace Donky.Messaging.Rich.Logic
 
 				DonkyCore.Instance.SubscribeToLocalEvent<SdkInitialisedEvent>(
 					e => Instance.DeleteExpiredRichMessagesAsync().ExecuteInBackground());
+
+				if (clearInboxOnRegistrationChange)
+				{
+					DonkyCore.Instance.SubscribeToLocalEvent<RegistrationChangedEvent>(
+						e => Instance.DeleteAllMessagesAsync().ExecuteInBackground());
+				}
 
 				_isInitialised = true;
 			}

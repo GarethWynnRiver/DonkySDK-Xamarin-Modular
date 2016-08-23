@@ -53,6 +53,7 @@
     <Compile Include="RichMessage.cs" />
     <Compile Include="RichMessageReceivedEvent.cs" />
     <Compile Include="RichMessagingManager.cs" />
+    <Compile Include="RichMessageDeletedEvent.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Donky.Core\Core\Donky.Core.csproj">
