@@ -46,6 +46,7 @@ namespace Donky.Core.Configuration
 		{
 			_eventBus = eventBus;
 		    _logger = logger;
+			_values = new ConcurrentDictionary<string, string>();
 		}
 
 		public async Task InitialiseAsync()

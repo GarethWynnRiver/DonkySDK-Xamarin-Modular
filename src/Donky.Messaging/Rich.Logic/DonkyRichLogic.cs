@@ -6,7 +6,9 @@
 // ///////////////////////////////////////////////////////////////////////////////////////////
 using System;
 using Donky.Core;
+using Donky.Core.Events;
 using Donky.Core.Framework;
+using Donky.Core.Framework.Extensions;
 using Donky.Core.Notifications;
 using Donky.Core.Registration;
 using Donky.Messaging.Rich.Logic.Data;
@@ -49,6 +51,9 @@ namespace Donky.Messaging.Rich.Logic
 						Type = "RichMessage",
 						Handler = n => Instance.HandleRichMessageAsync(n)
 					});
+
+				DonkyCore.Instance.SubscribeToLocalEvent<SdkInitialisedEvent>(
+					e => Instance.DeleteExpiredRichMessagesAsync().ExecuteInBackground());
 
 				_isInitialised = true;
 			}

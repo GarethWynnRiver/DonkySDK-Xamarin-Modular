@@ -16,6 +16,7 @@ using Donky.Core.Notifications;
 using Donky.Messaging.Common;
 using Donky.Messaging.Rich.Logic.Data;
 using Donky.Core.Configuration;
+using Donky.Core.Framework.Logging;
 
 namespace Donky.Messaging.Rich.Logic
 {
@@ -26,6 +27,7 @@ namespace Donky.Messaging.Rich.Logic
 		private readonly ICommonMessagingManager _commonMessagingManager;
 		private readonly IJsonSerialiser _serialiser;
 		private readonly IEventBus _eventBus;
+		private const int RichMessageAvailabilityDaysDefault = 30;
 
         public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus, IConfigurationManager configurationManager)
 		{
@@ -34,8 +36,6 @@ namespace Donky.Messaging.Rich.Logic
 			_serialiser = serialiser;
 			_eventBus = eventBus;
             _configurationManager = configurationManager;
-
-            DeleteRichMessageAvailabilityDaysExpirations();
 		}
 
 		public async Task<IEnumerable<RichMessage>> GetAllAsync()
@@ -109,23 +109,29 @@ namespace Donky.Messaging.Rich.Logic
 			await _commonMessagingManager.NotifyMessageReceivedAsync(message, notification);
 		}
 
-        private async Task DeleteRichMessageAvailabilityDaysExpirations()
+		public async Task DeleteExpiredRichMessagesAsync()
         {
-            var richMessageAvailabilityDays = _configurationManager.GetValue<string>("RichMessageAvailabilityDays");
+            var richMessageAvailabilityDays = _configurationManager.GetValue<int>("RichMessageAvailabilityDays");
+			if (richMessageAvailabilityDays <= 0)
+			{
+				richMessageAvailabilityDays = RichMessageAvailabilityDaysDefault;
+			}
+
             var timeNow = DateTime.UtcNow;
 
             var messages = await GetAllAsync();
 
             List<Guid> deletionQueue = new List<Guid>();
 
-            foreach(var message in messages)
+			foreach(var message in messages.Where(m => m.ReceivedTimestamp.HasValue))
             {
-                var richMessageReceivedTime = message.ReceivedTimestamp;
-                var richMessageAvailabilityExpiry = ((DateTime)richMessageReceivedTime).AddDays(Convert.ToInt32(richMessageAvailabilityDays));
+				var receivedTime = message.ReceivedTimestamp.Value;
+				var expiryTime = receivedTime.AddDays(richMessageAvailabilityDays);
 
-                if(richMessageAvailabilityExpiry <= timeNow)
+                if(expiryTime <= timeNow)
                 {
                     deletionQueue.Add(message.MessageId);
+					Logger.Instance.LogInformation("Removing expired message {0} with description {1}", message.MessageId, message.Description);
                 }
             }
 

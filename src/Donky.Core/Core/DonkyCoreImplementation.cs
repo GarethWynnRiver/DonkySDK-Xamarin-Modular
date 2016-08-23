@@ -112,6 +112,7 @@ namespace Donky.Core
 
 					_startupManager.PerformStartupTasksAsync().ExecuteInBackground();
 
+					PublishLocalEvent(new SdkInitialisedEvent(), CoreModuleDefinition);
 				}, "InitialiseAsync");
 			}
 			finally
