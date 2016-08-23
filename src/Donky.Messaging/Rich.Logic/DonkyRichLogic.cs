@@ -29,6 +29,7 @@ namespace Donky.Messaging.Rich.Logic
 		/// <summary>
 		/// Initialises the Donky Rich Logic module.
 		/// </summary>
+		/// <param name="clearInboxOnRegistrationChange">If true, all messages will be removed when the user context changes.</param>
 		/// <exception cref="System.InvalidOperationException">DonkyRichLogic is already initialised</exception>
 		public static void Initialise(bool clearInboxOnRegistrationChange = false)
 		{

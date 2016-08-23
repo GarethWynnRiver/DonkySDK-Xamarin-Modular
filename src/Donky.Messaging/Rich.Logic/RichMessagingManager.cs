@@ -76,6 +76,7 @@ namespace Donky.Messaging.Rich.Logic
 			foreach (var id in messageIds)
 			{
 				await _context.RichMessages.DeleteAsync(id);
+				Logger.Instance.LogInformation("Deleting rich message {0}", id);
 			}
 
 			_eventBus.PublishAsync(new RichMessageDeletedEvent(messageIds, DonkyRichLogic.Module))
@@ -86,6 +87,7 @@ namespace Donky.Messaging.Rich.Logic
 
 		public async Task DeleteAllMessagesAsync()
 		{
+			Logger.Instance.LogInformation("Deleting ALL Rich Messages");
 			var data = await _context.RichMessages.GetAllAsync();
 			var toDelete = data.Select(m => m.Message.MessageId).ToArray();
 			await DeleteMessagesAsync(toDelete);
