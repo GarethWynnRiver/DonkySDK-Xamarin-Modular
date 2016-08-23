@@ -244,6 +244,11 @@ namespace Donky.Core.Framework.Logging
 					// occasionally see Sharing violation here.  Suspect that log file changes are not releasing 
 					// handles immediately in all cases.
 				}
+				catch (Exception ex) when (attempt < maxAttempts && ex.GetType().Name == "IsolatedStorageException")
+				{
+					// occasionally see System.IO.IsolatedStorage.IsolatedStorageException (not available in PCL).  Suspect that log file changes are not releasing 
+					// handles immediately in all cases.
+				}
 				finally
 				{
 					_fileLock.Release();
