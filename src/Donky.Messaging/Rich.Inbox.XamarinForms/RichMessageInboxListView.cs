@@ -10,15 +10,15 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 {
     public class RichMessageInboxListView : ListView
     {
-        public static BindableProperty ShowItemMultiSelectorProperty =
-        BindableProperty.Create<RichMessageInboxListView, bool>(ctrl => ctrl.ShowItemMultiSelector,
-        defaultValue: false,
-        defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) =>
-        {
-            var ctrl = (RichMessageInboxListView)bindable;
-            ctrl.ShowItemMultiSelector = newValue;
-        });
+		public static BindableProperty ShowItemMultiSelectorProperty =
+			BindableProperty.Create<RichMessageInboxListView, bool>(ctrl => ctrl.ShowItemMultiSelector,
+			defaultValue: false,
+			defaultBindingMode: BindingMode.TwoWay,
+			propertyChanging: (bindable, oldValue, newValue) =>
+			{
+				var ctrl = (RichMessageInboxListView)bindable;
+				ctrl.ShowItemMultiSelector = newValue;
+			});
 
         private bool _showItemMultiSelector;
         public bool ShowItemMultiSelector
