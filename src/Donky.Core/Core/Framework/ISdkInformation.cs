@@ -25,7 +25,7 @@ MIT LICENCE:
     THE SOFTWARE. */
 namespace Donky.Core.Framework
 {
-	internal interface ISdkInformation
+	public interface ISdkInformation
 	{
 		string CoreSdkVersion { get; }
 
