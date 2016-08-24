@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="Donky.Messaging.Rich.Inbox.XamarinForms.RichInboxView"
+		xmlns:converters="clr-namespace:Donky.Messaging.Rich.Inbox.XamarinForms.Converters">
+	<ContentView.Resources>
+		<ResourceDictionary>
+			<converters:ItemDateTimeDisplayConverter x:Key="itemTimeConverter" />
+			<converters:BooleanToColourConverter x:Key="boolColourConverter" />
+		</ResourceDictionary>
+	</ContentView.Resources>
+	<ContentView.Content>
+		<ListView ItemsSource="{Binding Items}"
+				ItemSelected="OnItemSelected"
+				ItemTapped="OnTap" 
+				IsPullToRefreshEnabled="true" 
+				Refreshing="OnRefresh"
+				RowHeight="100">
+		<ListView.ItemTemplate>
+			<DataTemplate>
+				<ViewCell>
+					<ViewCell.ContextActions>
+						<!-- <MenuItem Command="{Binding ShareCommand}" Text="Share" CommandParameter="{Binding .}" /> -->
+						<MenuItem Command="{Binding DeleteCommand}" Text="Delete" IsDestructive="true" CommandParameter="{Binding .}" />
+					</ViewCell.ContextActions>
+					<Grid BackgroundColor="{Binding IsRead, Converter={StaticResource boolColourConverter}, ConverterParameter='#66CCFF:#FFFFFF'}">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="100" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="100" />
+							<ColumnDefinition Width="10" />
+						</Grid.ColumnDefinitions>
+						<Image Grid.Column="0" Source="{Binding AvatarUrl}" />
+						<!-- TODO: Add NEW overlay to col 0 -->
+						<Label Grid.Column="1" Text="{Binding Message.Description}" 
+								VerticalTextAlignment="Center" />
+						<Label Grid.Column="2" Text="{Binding Message.ReceivedTimestamp, Converter={StaticResource itemTimeConverter}}" 
+								FontSize="Small"
+								VerticalTextAlignment="Center" HorizontalTextAlignment="End" />
+					</Grid>
+				</ViewCell>
+			</DataTemplate>
+			</ListView.ItemTemplate>
+		</ListView>
+	</ContentView.Content>
+</ContentView>

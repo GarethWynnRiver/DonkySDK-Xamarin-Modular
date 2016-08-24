@@ -62,12 +62,17 @@ namespace Donky.Messaging.Rich.Logic
 		public async Task MarkMessageAsReadAsync(Guid messageId)
 		{
 			var data = await _context.RichMessages.GetAsync(messageId);
-			if (data != null)
+			if (data != null && !data.Message.ReadTimestamp.HasValue)
 			{
 				data.Message.ReadTimestamp = DateTime.UtcNow;
 				await _commonMessagingManager.NotifyMessageReadAsync(data.Message);
 				await _context.RichMessages.AddOrUpdateAsync(data);
 				await _context.SaveChangesAsync();
+
+				_eventBus.PublishAsync(new RichMessageReadEvent(data.Message.MessageId)
+				{
+					Publisher = DonkyRichLogic.Module
+				}).ExecuteInBackground();
 			}
 		}
 

@@ -7,6 +7,7 @@
 using Donky.Core;
 using Donky.Core.Framework;
 using Donky.Core.Registration;
+using Xamarin.Forms;
 
 namespace Donky.Messaging.Rich.Inbox.XamarinForms
 {
@@ -21,9 +22,20 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 		/// <summary>
 		/// Initialise the Common Messaging module.
 		/// </summary>
-		public static void Initialise()
+		public static void Initialise(bool autoHandleRichMessageNavigation = false)
 		{
 			DonkyCore.Instance.RegisterModule(Module);
+
+			if (autoHandleRichMessageNavigation)
+			{
+				DonkyCore.Instance.SubscribeToLocalEvent<NavigateToRichMessageEvent>(e =>
+				{
+					Device.BeginInvokeOnMainThread(async () =>
+					{
+						await Application.Current.MainPage.Navigation.PushAsync(new RichMessageView(), true);
+					});
+				});
+			}
 		}
 	}
 }

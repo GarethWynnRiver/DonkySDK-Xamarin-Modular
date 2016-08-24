@@ -32,7 +32,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.Converters
             int totalHoursSinceSent = (int)Math.Ceiling((now - sent).TotalHours);
 
             bool wasSentToday = ((sent.Date == now.Date) &&(sent.Month == now.Month) && (sent.Year == now.Year));
-            bool wasSentYesterday = sent == DateTime.Now.AddDays(-1);
+            bool wasSentYesterday = sent.Date == DateTime.Today.AddDays(-1);
 
             bool wasSentGreaterOrEqualTo1HourAgo = totalMinutesSinceSent >= 60;
             bool wasSentGreaterThan24HoursAgo = (totalHoursSinceSent > 24);
@@ -43,7 +43,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.Converters
             // Less than 5 minutes = Just now
             if ((totalMinutesSinceSent < 2) && !isResponse)
             {
-                response = "Just now";
+                response = "just now";
                 isResponse = true;
             }
             // More than 5 minutes but less than 1 hour = X min ago
@@ -77,7 +77,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms.Converters
                 isResponse = true;
             }
             // more than 1 week ago = 22/09/2015
-            else if ((wasSentWithinLast7Days) && !isResponse)
+            else if ((wasSentGreaterThanSevenDaysAgo) && !isResponse)
             {
                 response = string.Format("{0:dd/MM/yy}", sent);
                 isResponse = true;

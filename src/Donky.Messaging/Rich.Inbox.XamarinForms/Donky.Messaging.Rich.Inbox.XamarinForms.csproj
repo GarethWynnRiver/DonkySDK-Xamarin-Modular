@@ -37,21 +37,22 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Converters\BooleanToColourConverter.cs" />
-    <Compile Include="Converters\BooleanToDoubleConverter.cs" />
     <Compile Include="Converters\ItemDateTimeDisplayConverter.cs" />
-    <Compile Include="Converters\NewMailDateTimeToVisibilityConverter.cs" />
-    <Compile Include="Converters\ObjectToStringConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RichMessageInboxListView.cs" />
-    <Compile Include="RichMessageListViewItem.xaml.cs">
-      <DependentUpon>RichMessageListViewItem.xaml</DependentUpon>
-    </Compile>
     <Compile Include="RichMessageWebView.cs" />
     <Compile Include="Services\RichInboxItemDisplayDateService.cs" />
     <Compile Include="ViewModels\PropertyChangedBase.cs" />
-    <Compile Include="ViewModels\RichMessageInboxListViewItemModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="DonkyRichInboxXamarinForms.cs" />
+    <Compile Include="ViewModels\RichInboxViewModel.cs" />
+    <Compile Include="Views\RichInboxView.xaml.cs">
+      <DependentUpon>RichInboxView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\RichMessageView.xaml.cs">
+      <DependentUpon>RichMessageView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\RichInboxItemViewModel.cs" />
+    <Compile Include="ViewModels\NavigateToRichMessageEvent.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Donky.Core\Core\Donky.Core.csproj">
@@ -68,12 +69,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="RichMessageListViewItem.xaml">
-      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Views\" />
   </ItemGroup>
   <ItemGroup>
@@ -82,6 +77,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Images\Blank192x192.png" />
+    <EmbeddedResource Include="Views\RichInboxView.xaml">
+      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\RichMessageView.xaml">
+      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Images\EmailUnread.png" />
