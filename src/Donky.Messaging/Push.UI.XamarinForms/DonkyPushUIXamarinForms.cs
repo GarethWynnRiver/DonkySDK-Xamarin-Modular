@@ -80,21 +80,24 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 				var buttonSet = messageEvent.PlatformButtonSet;
 				var description = String.Join("|", buttonSet.ButtonSetActions.Select(a => a.Label));
 
+
+				var button1Config = buttonSet.ButtonSetActions[0];
+				var button2Config = buttonSet.ButtonSetActions[1];
 				alertView.AddActionButtons(
-					buttonSet.ButtonSetActions[0].Label,
+					button1Config.Label,
 					() =>
 					{
 						manager.HandleInteractionResultAsync(message.MessageId, buttonSet.InteractionType,
 							description,
-							"Button1").ExecuteInBackground();
+							"Button1", button1Config.ActionType, button1Config.Data).ExecuteInBackground();
 						displayAlertEvent.Dismiss();
 					},
-					buttonSet.ButtonSetActions[1].Label,
+					button2Config.Label,
 					() =>
 					{
 						manager.HandleInteractionResultAsync(message.MessageId, buttonSet.InteractionType,
 							description,
-							"Button2").ExecuteInBackground();
+							"Button2", button2Config.ActionType, button2Config.Data).ExecuteInBackground();
 						displayAlertEvent.Dismiss();
 					});
 				autoDismiss = false;

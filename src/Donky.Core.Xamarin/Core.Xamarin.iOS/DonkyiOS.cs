@@ -36,6 +36,7 @@ namespace Donky.Core.Xamarin.iOS
 			DonkyCore.Registry.AddRegistration<IPersistentStorage, iOSPersistentStorage>();
 			DonkyCore.Registry.AddRegistration<IFileStorageFactory, iOSFileStorageFactory>();
 			DonkyCore.Registry.AddRegistration<IRemoteNotificationChannel, ApnsRemoteNotificationChannel>();
+			DonkyCore.Registry.AddRegistration<IDeviceInteraction, iOSDeviceInteraction>();
 
 			DonkyCore.Instance.RegisterModule(Module);
 			DonkyCore.Instance.RegisterServiceType<IAssetDataProvider, AssetDataProvider>();

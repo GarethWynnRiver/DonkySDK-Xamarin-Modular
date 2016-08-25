@@ -29,7 +29,9 @@ namespace Donky.Messaging.Push.Logic
 		/// <param name="interactionType">Type of the interaction.</param>
 		/// <param name="buttonDescription">The button description.</param>
 		/// <param name="userAction">The user action.</param>
+		/// <param name="actionType">The type of action associated with the button</param>
+		/// <param name="data">The action data</param>
 		/// <returns></returns>
-		Task HandleInteractionResultAsync(Guid messageId, string interactionType, string buttonDescription, string userAction);
+		Task HandleInteractionResultAsync(Guid messageId, string interactionType, string buttonDescription, string userAction, string actionType = null, string data = null);
 	}
 }

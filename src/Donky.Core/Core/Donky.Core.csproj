@@ -190,6 +190,7 @@
     <Compile Include="Startup\StartupManager.cs" />
     <Compile Include="Registration\UserUpdatedData.cs" />
     <Compile Include="Events\SdkInitialisedEvent.cs" />
+    <Compile Include="Framework\IDeviceInteraction.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Collections.Concurrent">
