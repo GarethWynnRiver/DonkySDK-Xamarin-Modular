@@ -28,7 +28,5 @@ namespace Donky.Core.Framework
 	public interface ISdkInformation
 	{
 		string CoreSdkVersion { get; }
-
-		bool IsInitialised { get; set; }
 	}
 }
