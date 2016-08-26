@@ -13,6 +13,7 @@ namespace Donky.Core.Xamarin.Android
 			{
 				var toOpen = Uri.Parse(uri);
 				var intent = new Intent(Intent.ActionView, toOpen);
+				intent.SetFlags(ActivityFlags.NewTask);
 				Application.Context.StartActivity(intent);
 			}
 			catch (System.Exception ex)
