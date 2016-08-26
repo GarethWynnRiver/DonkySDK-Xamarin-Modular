@@ -5,8 +5,10 @@
 //  Copyright:       Donky Networks Ltd 2015
 // ///////////////////////////////////////////////////////////////////////////////////////////
 using System;
+using System.Threading.Tasks;
 using Donky.Core.Events;
 using Donky.Core.Framework;
+using Donky.Core.Framework.Extensions;
 using Donky.Core.Framework.Logging;
 using Donky.Core.Framework.Storage;
 using Donky.Core.Notifications.Remote;
@@ -16,6 +18,7 @@ using Donky.Core.Xamarin.iOS.Storage;
 using Foundation;
 using UIKit;
 using System.Diagnostics;
+using Donky.Core.Notifications;
 
 namespace Donky.Core.Xamarin.iOS
 {
@@ -49,9 +52,34 @@ namespace Donky.Core.Xamarin.iOS
 					if (UIApplication.SharedApplication.ApplicationIconBadgeNumber > 0)
 					{
 						UIApplication.SharedApplication.ApplicationIconBadgeNumber--;
+						SetServerBadgeCount((int)UIApplication.SharedApplication.ApplicationIconBadgeNumber).ExecuteInBackground();
 					}
 				});
 			});
+
+			DonkyCore.Instance.SubscribeToLocalEvent<SetBadgeCountEvent>(e =>
+			{
+				UIApplication.SharedApplication.InvokeOnMainThread(() =>
+				{
+					UIApplication.SharedApplication.ApplicationIconBadgeNumber = e.Count;
+				});
+
+				SetServerBadgeCount(e.Count).ExecuteInBackground();
+			});
+		}
+
+		private static async Task SetServerBadgeCount(int count)
+		{
+			if (DonkyCore.Instance.IsInitialised && await DonkyCore.Instance.RegistrationController.GetIsRegisteredAsync())
+			{
+				var notification = new ClientNotification
+					{
+						{"type", "SetBadgeCount"},
+						{"badgeCount", count}
+					};
+
+				await DonkyCore.Instance.GetService<INotificationManager>().SendClientNotificationsAsync(notification);
+			}
 		}
 
 		public static void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)

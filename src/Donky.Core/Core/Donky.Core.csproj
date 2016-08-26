@@ -191,6 +191,7 @@
     <Compile Include="Registration\UserUpdatedData.cs" />
     <Compile Include="Events\SdkInitialisedEvent.cs" />
     <Compile Include="Framework\IDeviceInteraction.cs" />
+    <Compile Include="Events\SetBadgeCountEvent.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Collections.Concurrent">

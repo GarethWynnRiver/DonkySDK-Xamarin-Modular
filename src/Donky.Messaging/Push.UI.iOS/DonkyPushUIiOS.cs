@@ -81,7 +81,11 @@ namespace Donky.Messaging.Push.UI.iOS
 			var option2 = actionEvent.NotificationInfo.GetValue<string>("lbl2");
 			var action1 = actionEvent.NotificationInfo.GetValue<string>("act1");
 			var action2 = actionEvent.NotificationInfo.GetValue<string>("act2");
-			var userAction = actionEvent.Action == option1
+			var data1 = actionEvent.NotificationInfo.GetValue<string>("link1");
+			var data2 = actionEvent.NotificationInfo.GetValue<string>("link2");
+
+			var wasOption1 = actionEvent.Action.ToLowerInvariant() == option1.ToLowerInvariant();
+			var userAction = wasOption1
 				? (action1 == "Dismiss" ? "Dismissed" : "Button1")
 				: (action2 == "Dismiss" ? "Dismissed" : "Button2"); 
 				
@@ -89,8 +93,11 @@ namespace Donky.Messaging.Push.UI.iOS
 			var interactionType = actionEvent.NotificationInfo.GetValue<string>("inttype");
 			var messageId = Guid.Parse(actionEvent.NotificationInfo.GetValue<string>("msgid"));
 
+			var action = wasOption1 ? action1 : action2;
+			var data = wasOption1 ? data1 : data2;
+
 			DonkyCore.Instance.GetService<IPushMessagingManager>().HandleInteractionResultAsync(messageId,
-				interactionType, buttonDescription, userAction).ExecuteInBackground();
+				interactionType, buttonDescription, userAction, action, data).ExecuteInBackground();
 		}
 
 		private static void HandleConfigurationUpdated(ConfigurationUpdatedEvent configuration)
