@@ -13,6 +13,7 @@ using Donky.Core.Framework;
 using Donky.Core.Framework.Extensions;
 using Donky.Core.Registration;
 using Donky.Core.Xamarin.Forms.Alerts;
+using Donky.Messaging.Common;
 using Donky.Messaging.Push.Logic;
 using Xamarin.Forms;
 
@@ -45,7 +46,8 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 				DonkyCore.Instance.RegisterModule(Module);
 
 				DonkyCore.Instance.SubscribeToLocalEvent<DisplaySimplePushAlertEvent>(HandleDisplaySimplePushAlert);
-	
+				DonkyCore.Instance.SubscribeToLocalEvent<DisplayBasicMessageAlertEvent>(HandleDisplayBasicMessageAlert);
+
 				_isInitialised = true;
 			}
 		}
@@ -53,30 +55,16 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 		private static void HandleDisplaySimplePushAlert(DisplaySimplePushAlertEvent alertEvent)
 		{
 			var messageEvent = alertEvent.MessageReceivedEvent;
-
-			var alertView = new SimplePushAlertView();
-			var avatarId = messageEvent.Message.AvatarAssetId;
+			Message message = messageEvent.Message;
 			var autoDismiss = true;
-			if (!String.IsNullOrEmpty(avatarId))
-			{
-				var assetHelper = DonkyCore.Instance.GetService<IAssetHelper>();
-				alertView.Image.Source = new UriImageSource
-				{
-					Uri = new Uri(assetHelper.CreateUriForAsset(avatarId))
-				};
-			}
-            alertView.TitleLabel.Text = messageEvent.Message.SenderDisplayName;
-			alertView.BodyLabel.Text = messageEvent.Message.Body;
+			SimplePushAlertView alertView;
+			DisplayAlertEvent displayAlertEvent;
+			CreateBasicAlertView(message, out alertView, out displayAlertEvent);
 
-			var displayAlertEvent = new DisplayAlertEvent
-			{
-				Content = alertView
-			};
-
-			if(messageEvent.PlatformButtonSet != null)
+			if (messageEvent.PlatformButtonSet != null)
 			{
 				var manager = DonkyCore.Instance.GetService<IPushMessagingManager>();
-				var message = messageEvent.Message;
+				var pushMessage = messageEvent.Message;
 				var buttonSet = messageEvent.PlatformButtonSet;
 				var description = String.Join("|", buttonSet.ButtonSetActions.Select(a => a.Label));
 
@@ -87,7 +75,7 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 					button1Config.Label,
 					() =>
 					{
-						manager.HandleInteractionResultAsync(message.MessageId, buttonSet.InteractionType,
+						manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
 							description,
 							"Button1", button1Config.ActionType, button1Config.Data).ExecuteInBackground();
 						displayAlertEvent.Dismiss();
@@ -95,7 +83,7 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 					button2Config.Label,
 					() =>
 					{
-						manager.HandleInteractionResultAsync(message.MessageId, buttonSet.InteractionType,
+						manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
 							description,
 							"Button2", button2Config.ActionType, button2Config.Data).ExecuteInBackground();
 						displayAlertEvent.Dismiss();
@@ -104,6 +92,38 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 			}
 
 			displayAlertEvent.AutoDismiss = autoDismiss;
+
+			DonkyCore.Instance.PublishLocalEvent(displayAlertEvent, Module);
+		}
+
+		private static void CreateBasicAlertView(Message message, out SimplePushAlertView alertView, out DisplayAlertEvent displayAlertEvent, string bodyOverride = null)
+		{
+			alertView = new SimplePushAlertView();
+			var avatarId = message.AvatarAssetId;
+			if (!String.IsNullOrEmpty(avatarId))
+			{
+				var assetHelper = DonkyCore.Instance.GetService<IAssetHelper>();
+				alertView.Image.Source = new UriImageSource
+				{
+					Uri = new Uri(assetHelper.CreateUriForAsset(avatarId))
+				};
+			}
+			alertView.TitleLabel.Text = message.SenderDisplayName;
+			alertView.BodyLabel.Text = bodyOverride ?? message.Body;
+
+			displayAlertEvent = new DisplayAlertEvent
+			{
+				Content = alertView
+			};
+		}
+
+		private static void HandleDisplayBasicMessageAlert(DisplayBasicMessageAlertEvent alertEvent)
+		{
+			Message message = alertEvent.Message;
+			SimplePushAlertView alertView;
+			DisplayAlertEvent displayAlertEvent;
+			CreateBasicAlertView(message, out alertView, out displayAlertEvent, alertEvent.AlertText);
+			displayAlertEvent.AutoDismiss = true;
 
 			DonkyCore.Instance.PublishLocalEvent(displayAlertEvent, Module);
 		}

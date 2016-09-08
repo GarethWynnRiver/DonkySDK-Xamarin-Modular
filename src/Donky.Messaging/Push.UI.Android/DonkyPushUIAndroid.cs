@@ -16,6 +16,7 @@ using Donky.Core.Xamarin.Android;
 using Donky.Messaging.Push.Logic;
 using Donky.Messaging.Push.UI.XamarinForms;
 using Android.OS;
+using Donky.Messaging.Common;
 
 namespace Donky.Messaging.Push.UI.Android
 {
@@ -47,6 +48,7 @@ namespace Donky.Messaging.Push.UI.Android
 
 				DonkyCore.Instance.RegisterModule(Module);
 				DonkyCore.Instance.SubscribeToLocalEvent<SimplePushMessageReceivedEvent>(HandleSimplePushReceived);
+				DonkyCore.Instance.SubscribeToLocalEvent<MessageReceivedEvent>(HandleMessageReceived);
 
 				_isInitialised = true;
 			}
@@ -63,14 +65,31 @@ namespace Donky.Messaging.Push.UI.Android
 			}
 			else
 			{
-				ShowNativeNotification(messageEvent);
+				ShowNativeNotification(messageEvent.Message, messageEvent.NotificationId, messageEvent.PlatformButtonSet);
 			}
 		}
 
-		private static void ShowNativeNotification(SimplePushMessageReceivedEvent messageEvent)
+		private static void HandleMessageReceived(MessageReceivedEvent messageEvent)
+		{
+			if (DonkyCore.Instance.GetService<IAppState>().IsOpen)
+			{
+				DonkyCore.Instance.PublishLocalEvent(new DisplayBasicMessageAlertEvent
+				{
+					Message = messageEvent.Message,
+					AlertText = messageEvent.AlertText,
+					NotificationId = messageEvent.NotificationId
+				}, Module);
+			}
+			else
+			{
+				ShowNativeNotification(messageEvent.Message, messageEvent.NotificationId, alertTextOverride: messageEvent.AlertText);
+			}
+		}
+
+
+		private static void ShowNativeNotification(Common.Message message, string notificationId, ButtonSet buttonSet = null, string alertTextOverride = null)
 		{
 			var nativeNotificationId = new Random().Next();
-			var message = messageEvent.Message;
 
 			// Setup intent to launch application
 			var context = Application.Context;
@@ -79,35 +98,35 @@ namespace Donky.Messaging.Push.UI.Android
 			var builder = new Notification.Builder(context)
 				.SetContentTitle(message.SenderDisplayName)
 				.SetSmallIcon(Resource.Drawable.donky_notification_small_icon_simple_push)
-				.SetContentText(message.Body);
+				.SetContentText(alertTextOverride ?? message.Body);
 
-			if (messageEvent.PlatformButtonSet != null && messageEvent.PlatformButtonSet.ButtonSetActions.Any())
+			var pushMessage = message as SimplePushMessage;
+			if (pushMessage != null && buttonSet != null && buttonSet.ButtonSetActions.Any())
 			{
 				builder.SetAutoCancel(false);
-
 				// Jelly Bean + above supports multiple actions
-				if (messageEvent.PlatformButtonSet.ButtonSetActions.Count == 2
+				if (buttonSet.ButtonSetActions.Count == 2
 				    && Build.VERSION.SdkInt >= BuildVersionCodes.JellyBean)
 				{
-					foreach (var action in messageEvent.PlatformButtonSet.ButtonSetActions)
+					foreach (var action in buttonSet.ButtonSetActions)
 					{
 						builder.AddAction(0,
 							action.Label,
 							CreateIntentForAction(context, nativeNotificationId, 
-								messageEvent.NotificationId, action, message,
-								messageEvent.PlatformButtonSet));
+								notificationId, action, pushMessage,
+								buttonSet));
 					}
 				}
 				else
 				{
 					builder.SetContentIntent(CreateIntentForAction(context, nativeNotificationId, 
-						messageEvent.NotificationId, messageEvent.PlatformButtonSet.ButtonSetActions[0], 
-						message, messageEvent.PlatformButtonSet));
+						notificationId, buttonSet.ButtonSetActions[0], 
+						pushMessage, buttonSet));
 				}
 			}
 			else
 			{
-				var intent = CreateIntentForBasicPush(context, nativeNotificationId, messageEvent.NotificationId);
+				var intent = CreateIntentForBasicPush(context, nativeNotificationId, notificationId);
 				builder.SetContentIntent(intent)
 					.SetAutoCancel(true);
 			}
@@ -126,7 +145,7 @@ namespace Donky.Messaging.Push.UI.Android
                 var fullScreenPendingIntent = PendingIntent.GetActivity(context, 0,
                     push, PendingIntentFlags.CancelCurrent);
                 builder
-                    .SetContentText(message.Body)
+                    .SetContentText(alertTextOverride ?? message.Body)
                     .SetFullScreenIntent(fullScreenPendingIntent, true);
 
             }

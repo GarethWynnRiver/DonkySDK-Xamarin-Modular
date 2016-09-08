@@ -41,6 +41,7 @@
     <Compile Include="DonkyPushUIXamarinForms.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimplePushAlertView.cs" />
+    <Compile Include="DisplayBasicMessageAlertEvent.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Autofac">

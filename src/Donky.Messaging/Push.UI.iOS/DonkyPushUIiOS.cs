@@ -17,6 +17,7 @@ using Donky.Core.Framework.Storage;
 using Donky.Core.Registration;
 using Donky.Core.Xamarin.iOS;
 using Donky.Core.Xamarin.iOS.Apns;
+using Donky.Messaging.Common;
 using Donky.Messaging.Push.Logic;
 using Donky.Messaging.Push.UI.XamarinForms;
 
@@ -53,6 +54,7 @@ namespace Donky.Messaging.Push.UI.iOS
 
 				DonkyCore.Instance.RegisterModule(Module);
 				DonkyCore.Instance.SubscribeToLocalEvent<SimplePushMessageReceivedEvent>(HandleSimplePushReceived);
+				DonkyCore.Instance.SubscribeToLocalEvent<MessageReceivedEvent>(HandleMessageReceived);
 				DonkyCore.Instance.SubscribeToLocalEvent<ConfigurationUpdatedEvent>(HandleConfigurationUpdated);
 				DonkyCore.Instance.SubscribeToLocalEvent<ApnsNotificationActionEvent>(HandleNotificationAction);
 
@@ -134,6 +136,27 @@ namespace Donky.Messaging.Push.UI.iOS
 			DonkyCore.Instance.PublishLocalEvent(new DisplaySimplePushAlertEvent
 			{
 				MessageReceivedEvent = messageEvent
+			}, Module);
+		}
+
+		private static void HandleMessageReceived(MessageReceivedEvent messageEvent)
+		{
+			// Decrement badge count
+			DonkyCore.Instance.PublishLocalEvent(new DecrementBadgeCountEvent(), Module);
+
+			// If this was the notification we were launched from, don't display the banner
+			var appState = DonkyCore.Instance.GetService<IAppState>();
+			if (appState.WasOpenedFromNotification && appState.LaunchingNotificationId == messageEvent.NotificationId)
+			{
+				return;
+			}
+
+			// Publish event for the common UI layer
+			DonkyCore.Instance.PublishLocalEvent(new DisplayBasicMessageAlertEvent
+			{
+				Message = messageEvent.Message,
+				AlertText = messageEvent.AlertText,
+				NotificationId = messageEvent.NotificationId
 			}, Module);
 		}
 	}
