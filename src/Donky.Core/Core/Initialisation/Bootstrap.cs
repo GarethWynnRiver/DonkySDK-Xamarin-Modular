@@ -69,6 +69,7 @@ namespace Donky.Core.Initialisation
 
 			Logger.Instance = new Logger(true);
 			Logger.EventBus = builder.BuildObject<IEventBus>();
+			ApiResult.Logger = Logger.Instance;
 		}
 
 		private static void RegisterServices()
