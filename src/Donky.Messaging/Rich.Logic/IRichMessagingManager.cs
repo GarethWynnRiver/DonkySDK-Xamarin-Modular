@@ -32,5 +32,9 @@ namespace Donky.Messaging.Rich.Logic
 		Task DeleteExpiredRichMessagesAsync();
 
 		Task DeleteAllMessagesAsync();
+
+		Task HandleSyncMessageReadAsync(ServerNotification notification);
+
+		Task HandleSyncMessageDeletedAsync(ServerNotification notification);
 	}
 }

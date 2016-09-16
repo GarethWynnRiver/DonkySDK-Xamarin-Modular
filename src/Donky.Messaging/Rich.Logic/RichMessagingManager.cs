@@ -17,6 +17,7 @@ using Donky.Messaging.Common;
 using Donky.Messaging.Rich.Logic.Data;
 using Donky.Core.Configuration;
 using Donky.Core.Framework.Logging;
+using Donky.Core;
 
 namespace Donky.Messaging.Rich.Logic
 {
@@ -27,15 +28,17 @@ namespace Donky.Messaging.Rich.Logic
 		private readonly ICommonMessagingManager _commonMessagingManager;
 		private readonly IJsonSerialiser _serialiser;
 		private readonly IEventBus _eventBus;
+		private readonly INotificationManager _notificationManager;
 		private const int RichMessageAvailabilityDaysDefault = 30;
 
-        public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus, IConfigurationManager configurationManager)
+        public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus, IConfigurationManager configurationManager, INotificationManager notificationManager)
 		{
 			_context = context;
 			_commonMessagingManager = commonMessagingManager;
 			_serialiser = serialiser;
 			_eventBus = eventBus;
             _configurationManager = configurationManager;
+			_notificationManager = notificationManager;
 		}
 
 		public async Task<IEnumerable<RichMessage>> GetAllAsync()
@@ -61,33 +64,12 @@ namespace Donky.Messaging.Rich.Logic
 
 		public async Task MarkMessageAsReadAsync(Guid messageId)
 		{
-			var data = await _context.RichMessages.GetAsync(messageId);
-			if (data != null && !data.Message.ReadTimestamp.HasValue)
-			{
-				data.Message.ReadTimestamp = DateTime.UtcNow;
-				await _commonMessagingManager.NotifyMessageReadAsync(data.Message);
-				await _context.RichMessages.AddOrUpdateAsync(data);
-				await _context.SaveChangesAsync();
-
-				_eventBus.PublishAsync(new RichMessageReadEvent(data.Message.MessageId)
-				{
-					Publisher = DonkyRichLogic.Module
-				}).ExecuteInBackground();
-			}
+			await MarkMessageAsReadInternalAsync(messageId);
 		}
 
 		public async Task DeleteMessagesAsync(params Guid[] messageIds)
 		{
-			foreach (var id in messageIds)
-			{
-				await _context.RichMessages.DeleteAsync(id);
-				Logger.Instance.LogInformation("Deleting rich message {0}", id);
-			}
-
-			_eventBus.PublishAsync(new RichMessageDeletedEvent(messageIds, DonkyRichLogic.Module))
-			         .ExecuteInBackground();
-
-			await _context.SaveChangesAsync();
+			await DeleteMessagesInternalAsync(true, messageIds);
 		}
 
 		public async Task DeleteAllMessagesAsync()
@@ -165,5 +147,64 @@ namespace Donky.Messaging.Rich.Logic
                 await DeleteMessagesAsync(deletionQueue.ToArray());
             }
         }
+
+		public Task HandleSyncMessageReadAsync(ServerNotification notification)
+		{
+			var messageId = Guid.Parse(notification.Data.Value<string>("messageId"));
+			return MarkMessageAsReadInternalAsync(messageId, false);
+		}
+
+		public Task HandleSyncMessageDeletedAsync(ServerNotification notification)
+		{
+			var messageId = Guid.Parse(notification.Data.Value<string>("messageId"));
+			return DeleteMessagesInternalAsync(false, messageId);
+		}
+
+		private async Task DeleteMessagesInternalAsync(bool sendNotification, params Guid[] messageIds)
+		{
+			foreach (var id in messageIds)
+			{
+				await _context.RichMessages.DeleteAsync(id);
+				if (sendNotification)
+				{
+					await _notificationManager.QueueClientNotificationAsync(new ClientNotification
+					{
+						{"type", "MessageDeleted"},
+						{"messageId", id}
+					});
+				}
+				Logger.Instance.LogInformation("Deleting rich message {0}", id);
+			}
+
+			_eventBus.PublishAsync(new RichMessageDeletedEvent(messageIds, DonkyRichLogic.Module))
+					 .ExecuteInBackground();
+
+			await _context.SaveChangesAsync();
+
+			if (sendNotification)
+			{
+				await _notificationManager.SynchroniseAsync();
+			}
+		}
+
+		private async Task MarkMessageAsReadInternalAsync(Guid messageId, bool sendNotification = true)
+		{
+			var data = await _context.RichMessages.GetAsync(messageId);
+			if (data != null && !data.Message.ReadTimestamp.HasValue)
+			{
+				data.Message.ReadTimestamp = DateTime.UtcNow;
+				if (sendNotification)
+				{
+					await _commonMessagingManager.NotifyMessageReadAsync(data.Message);
+				}
+				await _context.RichMessages.AddOrUpdateAsync(data);
+				await _context.SaveChangesAsync();
+
+				_eventBus.PublishAsync(new RichMessageReadEvent(data.Message.MessageId)
+				{
+					Publisher = DonkyRichLogic.Module
+				}).ExecuteInBackground();
+			}
+		}
 	}
 }

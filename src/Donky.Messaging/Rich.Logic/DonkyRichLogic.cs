@@ -51,6 +51,18 @@ namespace Donky.Messaging.Rich.Logic
 						AutoAcknowledge = false,
 						Type = "RichMessage",
 						Handler = n => Instance.HandleRichMessageAsync(n)
+					},
+					new DonkyNotificationSubscription
+					{
+						AutoAcknowledge = true,
+						Type = "SyncMessageRead",
+						Handler = n => Instance.HandleSyncMessageReadAsync(n)
+					},
+					new DonkyNotificationSubscription
+					{
+						AutoAcknowledge = true,
+						Type = "SyncMessageDeleted",
+						Handler = n => Instance.HandleSyncMessageDeletedAsync(n)
 					});
 
 				DonkyCore.Instance.SubscribeToLocalEvent<SdkInitialisedEvent>(
