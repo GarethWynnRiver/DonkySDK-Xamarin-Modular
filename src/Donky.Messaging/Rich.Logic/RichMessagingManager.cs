@@ -151,9 +151,9 @@ namespace Donky.Messaging.Rich.Logic
 			foreach(var message in messages.Where(m => m.ReceivedTimestamp.HasValue))
             {
 				var receivedTime = message.ReceivedTimestamp.Value;
-				var expiryTime = receivedTime.AddDays(richMessageAvailabilityDays);
+				var expiryTime = message.ExpiryTimeStamp ?? receivedTime.AddDays(richMessageAvailabilityDays);
 
-                if(expiryTime <= timeNow)
+				if(expiryTime <= timeNow)
                 {
                     deletionQueue.Add(message.MessageId);
 					Logger.Instance.LogInformation("Removing expired message {0} with description {1}", message.MessageId, message.Description);
