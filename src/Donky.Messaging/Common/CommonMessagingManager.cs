@@ -25,13 +25,13 @@ namespace Donky.Messaging.Common
 		public Task NotifyMessageReceivedAsync(Message message, ServerNotification serverNotification)
 		{
 			var notification = CreateMessageReceivedNotification(message, serverNotification);
-			return _notificationManager.QueueClientNotificationAsync(notification);
+			return _notificationManager.SendClientNotificationsAsync(notification);
 		}
 
 		public Task NotifyMessageReadAsync(Message message)
 		{
 			var notification = CreateMessageReadNotification(message);
-			return _notificationManager.QueueClientNotificationAsync(notification);
+			return _notificationManager.SendClientNotificationsAsync(notification);
 		}
 
 		private ClientNotification CreateMessageReadNotification(Message message)
