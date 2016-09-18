@@ -17,6 +17,8 @@ using Donky.Messaging.Push.Logic;
 using Donky.Messaging.Push.UI.XamarinForms;
 using Android.OS;
 using Donky.Messaging.Common;
+using Android.Media;
+using Android.Graphics;
 
 namespace Donky.Messaging.Push.UI.Android
 {
@@ -98,7 +100,9 @@ namespace Donky.Messaging.Push.UI.Android
 			var builder = new Notification.Builder(context)
 				.SetContentTitle(message.SenderDisplayName)
 				.SetSmallIcon(Resource.Drawable.donky_notification_small_icon_simple_push)
-				.SetContentText(alertTextOverride ?? message.Body);
+				.SetContentText(alertTextOverride ?? message.Body)
+				.SetVibrate(new[] { 0L, 100L })
+			    .SetSound(RingtoneManager.GetDefaultUri(RingtoneType.Notification));
 
 			var pushMessage = message as SimplePushMessage;
 			if (pushMessage != null && buttonSet != null && buttonSet.ButtonSetActions.Any())
@@ -151,6 +155,11 @@ namespace Donky.Messaging.Push.UI.Android
             }
 
 			var notification = builder.Build();
+
+			notification.LedARGB = Color.White;
+			notification.Flags |= NotificationFlags.ShowLights;
+			notification.LedOnMS = 200;
+			notification.LedOffMS = 2000;
 
 			var notificationManager = (NotificationManager) context.GetSystemService(Context.NotificationService);
 			notificationManager.Notify(nativeNotificationId, notification);
