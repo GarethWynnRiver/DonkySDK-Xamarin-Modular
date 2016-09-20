@@ -103,14 +103,18 @@ namespace Donky.Messaging.Rich.Logic
 					NotificationId = notification.NotificationId,
 					Publisher = DonkyRichLogic.Module
 				}).ExecuteInBackground();
-				// Also publish a more generic event that the push UI modules can understand if installed to render alerts
-				_eventBus.PublishAsync(new MessageReceivedEvent
+
+				if (!message.SilentNotification)
 				{
-					Message = message,
-					AlertText = message.Description,
-					NotificationId = notification.NotificationId,
-					Publisher = DonkyRichLogic.Module
-				}).ExecuteInBackground();
+					// Also publish a more generic event that the push UI modules can understand if installed to render alerts
+					_eventBus.PublishAsync(new MessageReceivedEvent
+					{
+						Message = message,
+						AlertText = message.Description,
+						NotificationId = notification.NotificationId,
+						Publisher = DonkyRichLogic.Module
+					}).ExecuteInBackground();
+				}
 			}
 
 			await _commonMessagingManager.NotifyMessageReceivedAsync(message, notification);
