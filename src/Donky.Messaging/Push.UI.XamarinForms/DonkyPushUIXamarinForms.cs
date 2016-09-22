@@ -68,26 +68,39 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 				var buttonSet = messageEvent.PlatformButtonSet;
 				var description = String.Join("|", buttonSet.ButtonSetActions.Select(a => a.Label));
 
-
-				var button1Config = buttonSet.ButtonSetActions[0];
-				var button2Config = buttonSet.ButtonSetActions[1];
-				alertView.AddActionButtons(
-					button1Config.Label,
-					() =>
+				if (buttonSet.ButtonSetActions.Count == 2)
+				{
+					var button1Config = buttonSet.ButtonSetActions[0];
+					var button2Config = buttonSet.ButtonSetActions[1];
+					alertView.AddActionButtons(
+						button1Config.Label,
+						() =>
+						{
+							manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
+								description,
+								"Button1", button1Config.ActionType, button1Config.Data).ExecuteInBackground();
+							displayAlertEvent.Dismiss();
+						},
+						button2Config.Label,
+						() =>
+						{
+							manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
+								description,
+								"Button2", button2Config.ActionType, button2Config.Data).ExecuteInBackground();
+							displayAlertEvent.Dismiss();
+						});
+				}
+				else if (buttonSet.ButtonSetActions.Count == 1)
+				{
+					var button1Config = buttonSet.ButtonSetActions[0];
+					displayAlertEvent.TapAction = () =>
 					{
 						manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
 							description,
 							"Button1", button1Config.ActionType, button1Config.Data).ExecuteInBackground();
-						displayAlertEvent.Dismiss();
-					},
-					button2Config.Label,
-					() =>
-					{
-						manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
-							description,
-							"Button2", button2Config.ActionType, button2Config.Data).ExecuteInBackground();
-						displayAlertEvent.Dismiss();
-					});
+					};
+				}
+
 				autoDismiss = false;
 			}
 

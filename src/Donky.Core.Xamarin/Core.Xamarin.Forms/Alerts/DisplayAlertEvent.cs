@@ -31,6 +31,11 @@ namespace Donky.Core.Xamarin.Forms.Alerts
 		public TimeSpan? DisplayTime { get; set; }
 
 		/// <summary>
+		/// Optional action that is invoked when the notification is tapped.
+		/// </summary>
+		public Action TapAction { get; set; }
+
+		/// <summary>
 		/// Dismisses this alert.
 		/// </summary>
 		public void Dismiss()

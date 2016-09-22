@@ -125,6 +125,11 @@ namespace Donky.Core.Xamarin.Forms.Alerts
 							{
 								semaphore.Release();
 							}
+
+							if (currentAlert.TapAction != null)
+							{
+								currentAlert.TapAction();
+							}
 						})
 					});
 
