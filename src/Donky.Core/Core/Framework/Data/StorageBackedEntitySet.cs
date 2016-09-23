@@ -58,10 +58,10 @@ namespace Donky.Core.Framework.Data
 		public async Task<TEntity> GetAsync(TId id)
 		{
 			await EnsureInitialisedAsync();
-
+			await _lock.WaitAsync();
 			TEntity entity;
 			_items.TryGetValue(id, out entity);
-
+			_lock.Release();
 			return entity;
 		}
 
@@ -69,13 +69,17 @@ namespace Donky.Core.Framework.Data
 		{
 			await EnsureInitialisedAsync();
 
+			await _lock.WaitAsync();
 			var query = _items.Select(x => x.Value);
 			if (predicate != null)
 			{
 				query = query.Where(predicate);
 			}
 
-			return query.ToList();
+			var results = query.ToList();
+			_lock.Release();
+
+			return results;
 		}
 
 		public async Task AddOrUpdateAsync(TEntity entity)
@@ -99,8 +103,10 @@ namespace Donky.Core.Framework.Data
 		public async Task<int> CountAsync()
 		{
 			await EnsureInitialisedAsync();
-
-			return _items.Count;
+			await _lock.WaitAsync();
+			var count = _items.Count;
+			_lock.Release();
+			return count;
 		}
 
 		public async Task SaveChangesAsync()
