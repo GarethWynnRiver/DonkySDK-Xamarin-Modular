@@ -33,7 +33,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 				var model = item as RichInboxItemViewModel;
 				if (model != null)
 				{
-					DonkyCore.Instance.PublishLocalEvent(new NavigateToRichMessageEvent(model.Message.MessageId), DonkyRichInboxXamarinForms.Module);
+					DonkyCore.Instance.PublishLocalEvent(new NavigateToRichMessageEvent(model.Message), DonkyRichInboxXamarinForms.Module);
 				}
 			});
 		

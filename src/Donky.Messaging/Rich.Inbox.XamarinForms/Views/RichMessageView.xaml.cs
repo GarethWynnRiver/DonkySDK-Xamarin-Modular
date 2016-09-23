@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Donky.Core.Framework.Extensions;
 using Donky.Messaging.Rich.Logic;
 using Xamarin.Forms;
@@ -8,7 +7,7 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 {
 	public partial class RichMessageView : ContentPage
 	{
-		private Guid _messageId;
+		private RichMessage _message;
 		private readonly WebView _webView;
 
 
@@ -19,33 +18,37 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 			Content = _webView;
 		}
 
-		public Guid MessageId
+		public RichMessage Message
 		{
-			get { return _messageId; }
+			get { return _message; }
 			set
 			{
-				_messageId = value;
-				LoadMessageAsync().ExecuteInBackground();;
+				_message = value;
+				UpdateView();
 			}
 		}
 
-		private async Task LoadMessageAsync()
+		private void UpdateView()
 		{
-			var message = await DonkyRichLogic.Instance.GetByIdAsync(_messageId);
+			var message = _message;
 			if (!message.ReadTimestamp.HasValue)
 			{
-				DonkyRichLogic.Instance.MarkMessageAsReadAsync(_messageId).ExecuteInBackground();
+				DonkyRichLogic.Instance.MarkMessageAsReadAsync(_message.MessageId).ExecuteInBackground();
 			}
 
 			var body = !String.IsNullOrEmpty(message.ExpiredBody) 
 			                  && message.ExpiryTimeStamp.HasValue 
 			                  && message.ExpiryTimeStamp <= DateTime.UtcNow
 			                  ? message.ExpiredBody : message.Body;
-			
-			_webView.Source = new HtmlWebViewSource
+
+
+			Device.BeginInvokeOnMainThread(() =>
 			{
-				Html = body
-			};
+				_webView.Source = new HtmlWebViewSource
+				{
+					Html = body
+				};
+			});
 		}
 	}
 }

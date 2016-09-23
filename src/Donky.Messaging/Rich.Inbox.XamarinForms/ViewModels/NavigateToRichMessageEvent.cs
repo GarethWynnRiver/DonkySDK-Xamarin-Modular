@@ -1,16 +1,15 @@
-﻿using System;
-using Donky.Core.Events;
-using Donky.Core.Registration;
+﻿using Donky.Core.Events;
+using Donky.Messaging.Rich.Logic;
 
 namespace Donky.Messaging.Rich.Inbox.XamarinForms
 {
 	public class NavigateToRichMessageEvent : LocalEvent
 	{
-		public NavigateToRichMessageEvent(Guid messageId)
+		public NavigateToRichMessageEvent(RichMessage message)
 		{
-			MessageId = messageId;
+			Message = message;
 		}
 
-		public Guid MessageId { get; set; }
+		public RichMessage Message { get; set; }
 	}
 }
