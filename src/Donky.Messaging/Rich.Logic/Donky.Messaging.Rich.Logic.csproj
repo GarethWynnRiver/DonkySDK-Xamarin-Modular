@@ -39,7 +39,6 @@
   <ItemGroup>
     <!-- A reference to the entire .NET Framework is automatically included -->
     <None Include="app.config" />
-    <None Include="packages.config" />
     <None Include="Rich.Logic.nuspec" />
   </ItemGroup>
   <ItemGroup>

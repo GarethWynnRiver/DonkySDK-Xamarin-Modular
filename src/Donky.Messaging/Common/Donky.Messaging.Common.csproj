@@ -51,7 +51,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="Common.nuspec" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Autofac">
