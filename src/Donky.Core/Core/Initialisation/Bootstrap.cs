@@ -69,6 +69,7 @@ namespace Donky.Core.Initialisation
 
 			Logger.Instance = new Logger(true);
 			Logger.EventBus = builder.BuildObject<IEventBus>();
+			ApiResult.Logger = Logger.Instance;
 		}
 
 		private static void RegisterServices()
@@ -147,7 +148,8 @@ namespace Donky.Core.Initialisation
 					c.Resolve<IConfigurationManager>(),
 					c.Resolve<IEventBus>(),
                     c.Resolve<IRefreshToken>(),
-                    c.Resolve<ILogger>()
+                    c.Resolve<ILogger>(),
+					c.Resolve<IJsonSerialiser>()
                     ))
 				.As<IRegistrationManager>()
 				.SingleInstance();

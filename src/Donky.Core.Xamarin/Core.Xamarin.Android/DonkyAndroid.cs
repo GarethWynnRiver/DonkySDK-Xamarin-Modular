@@ -40,6 +40,7 @@ namespace Donky.Core.Xamarin.Android
 			DonkyCore.Registry.AddRegistration<IPersistentStorage, AndroidPersistentStorage>();
 			DonkyCore.Registry.AddRegistration<IFileStorageFactory, AndroidFileStorageFactory>();
 			DonkyCore.Registry.AddRegistration<IRemoteNotificationChannel, GcmRemoteNotificationChannel>();
+			DonkyCore.Registry.AddRegistration<IDeviceInteraction, AndroidDeviceInteraction>();
 
 			DonkyCore.Instance.RegisterModule(Module);
 			DonkyCore.Instance.RegisterServiceType<IAssetProvider, AssetProvider>();

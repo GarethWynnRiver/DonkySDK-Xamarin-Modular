@@ -24,6 +24,7 @@ MIT LICENCE:
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE. */
 using System.Threading.Tasks;
+using Donky.Core.Notifications;
 using Donky.Core.Notifications.Remote;
 
 namespace Donky.Core.Registration
@@ -38,6 +39,8 @@ namespace Donky.Core.Registration
 		Task UpdatePushRegistrationAsync(RemoteChannelDetails channelDetails);
 
 		Task<bool> ReregisterWithExistingDetailsAsync();
+
+		Task HandleUserUpdatedAsync(ServerNotification notification);
 
         string NotificationSoundFilename { get; set; }
 	}

@@ -329,10 +329,16 @@ namespace Donky.Core.Services
 
         protected async Task<AccessDetail> RefreshToken()
         {
+			var secret = _registrationContext.DeviceSecret;
+			if (String.IsNullOrEmpty(secret))
+			{
+				throw new ArgumentException("DeviceSecret is null or empty.  SDK may be in the process of re-registering.");
+			}
+
             var request = new TokenRequest
             {
                 NetworkId = _registrationContext.NetworkId,
-                DeviceSecret = _registrationContext.DeviceSecret,
+                DeviceSecret = secret,
                 OperatingSystem = _environmentInformation.OperatingSystem,
                 SdkVersion = _sdkInformation.CoreSdkVersion
             };
@@ -378,7 +384,7 @@ namespace Donky.Core.Services
             {
                 builder.AppendFormat("\t{0} - {1}", failure.Property, failure.Details);
             }
-            Logger.Instance.LogError(builder.ToString());
+            Logger.Instance.LogWarning(builder.ToString());
         }
 
         private static void HandlePublicUnauthorisedResponse()

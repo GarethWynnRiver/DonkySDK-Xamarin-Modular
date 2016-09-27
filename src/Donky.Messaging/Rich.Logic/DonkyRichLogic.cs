@@ -6,7 +6,9 @@
 // ///////////////////////////////////////////////////////////////////////////////////////////
 using System;
 using Donky.Core;
+using Donky.Core.Events;
 using Donky.Core.Framework;
+using Donky.Core.Framework.Extensions;
 using Donky.Core.Notifications;
 using Donky.Core.Registration;
 using Donky.Messaging.Rich.Logic.Data;
@@ -27,8 +29,9 @@ namespace Donky.Messaging.Rich.Logic
 		/// <summary>
 		/// Initialises the Donky Rich Logic module.
 		/// </summary>
+		/// <param name="clearInboxOnRegistrationChange">If true, all messages will be removed when the user context changes.</param>
 		/// <exception cref="System.InvalidOperationException">DonkyRichLogic is already initialised</exception>
-		public static void Initialise()
+		public static void Initialise(bool clearInboxOnRegistrationChange = false)
 		{
 			lock (Lock)
 			{
@@ -48,7 +51,28 @@ namespace Donky.Messaging.Rich.Logic
 						AutoAcknowledge = false,
 						Type = "RichMessage",
 						Handler = n => Instance.HandleRichMessageAsync(n)
+					},
+					new DonkyNotificationSubscription
+					{
+						AutoAcknowledge = true,
+						Type = "SyncMessageRead",
+						Handler = n => Instance.HandleSyncMessageReadAsync(n)
+					},
+					new DonkyNotificationSubscription
+					{
+						AutoAcknowledge = true,
+						Type = "SyncMessageDeleted",
+						Handler = n => Instance.HandleSyncMessageDeletedAsync(n)
 					});
+
+				DonkyCore.Instance.SubscribeToLocalEvent<SdkInitialisedEvent>(
+					e => Instance.DeleteExpiredRichMessagesAsync().ExecuteInBackground());
+
+				if (clearInboxOnRegistrationChange)
+				{
+					DonkyCore.Instance.SubscribeToLocalEvent<RegistrationChangedEvent>(
+						e => Instance.DeleteAllMessagesAsync().ExecuteInBackground());
+				}
 
 				_isInitialised = true;
 			}

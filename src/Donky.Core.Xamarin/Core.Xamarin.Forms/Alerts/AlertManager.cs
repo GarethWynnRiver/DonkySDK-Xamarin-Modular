@@ -125,6 +125,11 @@ namespace Donky.Core.Xamarin.Forms.Alerts
 							{
 								semaphore.Release();
 							}
+
+							if (currentAlert.TapAction != null)
+							{
+								currentAlert.TapAction();
+							}
 						})
 					});
 
@@ -162,27 +167,44 @@ namespace Donky.Core.Xamarin.Forms.Alerts
 			} while (currentAlert != null);
 		}
 
+		private Page CurrentMainPage
+		{
+			get
+			{
+				var application = Application.Current;
+				var tabbedPage = application.MainPage as TabbedPage;
+				if (tabbedPage != null)
+				{
+					return tabbedPage.CurrentPage;
+				}
+
+				return application.MainPage;
+			}
+		}
+
 		private void EnsureFrameInitialised()
 		{
 			var application = Application.Current;
-			if (!_isMainPageFrameInitialised || application.MainPage != _mainPage)
+			var currentMainPage = CurrentMainPage;
+			if (!_isMainPageFrameInitialised || currentMainPage != _mainPage)
 			{
 				lock (_lock)
 				{
-					if (!_isMainPageFrameInitialised || application.MainPage != _mainPage)
+					if (!_isMainPageFrameInitialised || currentMainPage != _mainPage)
 					{
-                        if (application.MainPage == null)
+                        if (currentMainPage == null)
                         {
                             Logger.Instance.LogWarning(
                                 "DonkyApplication could not initialise alert view as the main page is null.");
                             return;
                         }
 
-                        if (application.MainPage.GetType() == typeof(NavigationPage))
-					    {
-                            var contentPage = application.MainPage as NavigationPage;
+						var navigationPage = currentMainPage as NavigationPage;
+						var contentPage = currentMainPage as ContentPage;
 
-                            var existingContent = ((ContentPage)contentPage.CurrentPage).Content;
+						if (navigationPage != null)
+					    {
+                            var existingContent = ((ContentPage)navigationPage.CurrentPage).Content;
 
                             if (existingContent == null)
                             {
@@ -191,20 +213,20 @@ namespace Donky.Core.Xamarin.Forms.Alerts
                                 return;
                             }
 
-                            ((ContentPage)contentPage.CurrentPage).Content = null;
+                            ((ContentPage)navigationPage.CurrentPage).Content = null;
                             existingContent.Parent = null;
 
                             var newContent = new Grid
                             {
                                 RowDefinitions = new RowDefinitionCollection
-							{
-								new RowDefinition{ Height = new GridLength(1, GridUnitType.Auto)},
-								new RowDefinition{ Height = new GridLength(1, GridUnitType.Star)}
-							},
+								{
+									new RowDefinition{ Height = new GridLength(1, GridUnitType.Auto)},
+									new RowDefinition{ Height = new GridLength(1, GridUnitType.Star)}
+								},
                                 ColumnDefinitions = new ColumnDefinitionCollection
 					    		{
-								new ColumnDefinition{ Width = new GridLength(1, GridUnitType.Star)}
-							},
+									new ColumnDefinition{ Width = new GridLength(1, GridUnitType.Star)}
+								},
                                 IsEnabled = false
                             };
 
@@ -217,7 +239,7 @@ namespace Donky.Core.Xamarin.Forms.Alerts
                                 IsEnabled = false
                             };
 
-                            if (Device.OS == TargetPlatform.iOS)
+                            if (Device.OS == TargetPlatform.iOS && Application.Current.MainPage as TabbedPage == null)
                             {
                                 // move layout under the status bar
                                 _overlayContainer.Padding = new Thickness(0, 20, 0, 0);
@@ -225,23 +247,14 @@ namespace Donky.Core.Xamarin.Forms.Alerts
 
                             newContent.Children.Add(_overlayContainer);
 
-                            ((ContentPage)contentPage.CurrentPage).Content = newContent;
+                            ((ContentPage)navigationPage.CurrentPage).Content = newContent;
 
-                            _mainPage = application.MainPage;
+                            _mainPage = currentMainPage;
                             _isMainPageFrameInitialised = true;
 					        
 					    }
-                        else if (application.MainPage.GetType() == typeof (ContentPage))
+                        else if (contentPage != null)
                         {
-                            var contentPage = application.MainPage as ContentPage;
-
-                            if (contentPage == null)
-                            {
-                                Logger.Instance.LogWarning(
-                                    "DonkyApplication could not initialise alert view as the main page is not a content page.");
-                                return;
-                            }
-
                             var existingContent = contentPage.Content;
                             contentPage.Content = null;
                             existingContent.Parent = null;
@@ -249,14 +262,14 @@ namespace Donky.Core.Xamarin.Forms.Alerts
                             var newContent = new Grid
                             {
                                 RowDefinitions = new RowDefinitionCollection
-							{
-								new RowDefinition{ Height = new GridLength(1, GridUnitType.Auto)},
-								new RowDefinition{ Height = new GridLength(1, GridUnitType.Star)}
-							},
+								{
+									new RowDefinition{ Height = new GridLength(1, GridUnitType.Auto)},
+									new RowDefinition{ Height = new GridLength(1, GridUnitType.Star)}
+								},
                                 ColumnDefinitions = new ColumnDefinitionCollection
-							{
-								new ColumnDefinition{ Width = new GridLength(1, GridUnitType.Star)}
-							},
+								{
+									new ColumnDefinition{ Width = new GridLength(1, GridUnitType.Star)}
+								},
                                 IsEnabled = false
                             };
 
@@ -269,7 +282,7 @@ namespace Donky.Core.Xamarin.Forms.Alerts
                                 IsEnabled = false
                             };
 
-                            if (Device.OS == TargetPlatform.iOS)
+                            if (Device.OS == TargetPlatform.iOS && Application.Current.MainPage as TabbedPage == null)
                             {
                                 // move layout under the status bar
                                 _overlayContainer.Padding = new Thickness(0, 20, 0, 0);
@@ -279,7 +292,7 @@ namespace Donky.Core.Xamarin.Forms.Alerts
 
                             contentPage.Content = newContent;
 
-                            _mainPage = application.MainPage;
+                            _mainPage = currentMainPage;
                             _isMainPageFrameInitialised = true;                            
                         }
                         else

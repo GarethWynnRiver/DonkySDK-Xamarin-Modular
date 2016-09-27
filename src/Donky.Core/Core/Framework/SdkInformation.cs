@@ -33,6 +33,5 @@ namespace Donky.Core.Framework
 		}
 
 		public string CoreSdkVersion { get; private set; }
-		public bool IsInitialised { get; set; }
 	}
 }

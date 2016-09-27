@@ -6,6 +6,8 @@
 // ///////////////////////////////////////////////////////////////////////////////////////////
 using System;
 using System.Threading.Tasks;
+using Donky.Core;
+using Donky.Core.Framework.Extensions;
 using Donky.Core.Notifications;
 
 namespace Donky.Messaging.Common
@@ -16,22 +18,32 @@ namespace Donky.Messaging.Common
 	internal class CommonMessagingManager : ICommonMessagingManager
 	{
 		private readonly INotificationManager _notificationManager;
+		private readonly IAppState _appState;
 
-		public CommonMessagingManager(INotificationManager notificationManager)
+		public CommonMessagingManager(INotificationManager notificationManager, IAppState appState)
 		{
 			_notificationManager = notificationManager;
+			_appState = appState;
 		}
 
-		public Task NotifyMessageReceivedAsync(Message message, ServerNotification serverNotification)
+		public async Task NotifyMessageReceivedAsync(Message message, ServerNotification serverNotification)
 		{
 			var notification = CreateMessageReceivedNotification(message, serverNotification);
-			return _notificationManager.QueueClientNotificationAsync(notification);
+			await _notificationManager.QueueClientNotificationAsync(notification);
+			if (_appState.IsOpen)
+			{
+				_notificationManager.SynchroniseAsync().ExecuteInBackground();
+			}
 		}
 
-		public Task NotifyMessageReadAsync(Message message)
+		public async Task NotifyMessageReadAsync(Message message)
 		{
 			var notification = CreateMessageReadNotification(message);
-			return _notificationManager.QueueClientNotificationAsync(notification);
+			await _notificationManager.QueueClientNotificationAsync(notification);
+			if (_appState.IsOpen)
+			{
+				_notificationManager.SynchroniseAsync().ExecuteInBackground();
+			}
 		}
 
 		private ClientNotification CreateMessageReadNotification(Message message)

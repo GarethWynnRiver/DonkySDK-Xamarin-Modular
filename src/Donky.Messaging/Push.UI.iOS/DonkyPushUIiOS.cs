@@ -17,6 +17,7 @@ using Donky.Core.Framework.Storage;
 using Donky.Core.Registration;
 using Donky.Core.Xamarin.iOS;
 using Donky.Core.Xamarin.iOS.Apns;
+using Donky.Messaging.Common;
 using Donky.Messaging.Push.Logic;
 using Donky.Messaging.Push.UI.XamarinForms;
 
@@ -53,6 +54,7 @@ namespace Donky.Messaging.Push.UI.iOS
 
 				DonkyCore.Instance.RegisterModule(Module);
 				DonkyCore.Instance.SubscribeToLocalEvent<SimplePushMessageReceivedEvent>(HandleSimplePushReceived);
+				DonkyCore.Instance.SubscribeToLocalEvent<MessageReceivedEvent>(HandleMessageReceived);
 				DonkyCore.Instance.SubscribeToLocalEvent<ConfigurationUpdatedEvent>(HandleConfigurationUpdated);
 				DonkyCore.Instance.SubscribeToLocalEvent<ApnsNotificationActionEvent>(HandleNotificationAction);
 
@@ -81,7 +83,11 @@ namespace Donky.Messaging.Push.UI.iOS
 			var option2 = actionEvent.NotificationInfo.GetValue<string>("lbl2");
 			var action1 = actionEvent.NotificationInfo.GetValue<string>("act1");
 			var action2 = actionEvent.NotificationInfo.GetValue<string>("act2");
-			var userAction = actionEvent.Action == option1
+			var data1 = actionEvent.NotificationInfo.GetValue<string>("link1");
+			var data2 = actionEvent.NotificationInfo.GetValue<string>("link2");
+
+			var wasOption1 = actionEvent.Action.ToLowerInvariant() == option1.ToLowerInvariant();
+			var userAction = wasOption1
 				? (action1 == "Dismiss" ? "Dismissed" : "Button1")
 				: (action2 == "Dismiss" ? "Dismissed" : "Button2"); 
 				
@@ -89,8 +95,11 @@ namespace Donky.Messaging.Push.UI.iOS
 			var interactionType = actionEvent.NotificationInfo.GetValue<string>("inttype");
 			var messageId = Guid.Parse(actionEvent.NotificationInfo.GetValue<string>("msgid"));
 
+			var action = wasOption1 ? action1 : action2;
+			var data = wasOption1 ? data1 : data2;
+
 			DonkyCore.Instance.GetService<IPushMessagingManager>().HandleInteractionResultAsync(messageId,
-				interactionType, buttonDescription, userAction).ExecuteInBackground();
+				interactionType, buttonDescription, userAction, action, data).ExecuteInBackground();
 		}
 
 		private static void HandleConfigurationUpdated(ConfigurationUpdatedEvent configuration)
@@ -127,6 +136,27 @@ namespace Donky.Messaging.Push.UI.iOS
 			DonkyCore.Instance.PublishLocalEvent(new DisplaySimplePushAlertEvent
 			{
 				MessageReceivedEvent = messageEvent
+			}, Module);
+		}
+
+		private static void HandleMessageReceived(MessageReceivedEvent messageEvent)
+		{
+			// Decrement badge count
+			DonkyCore.Instance.PublishLocalEvent(new DecrementBadgeCountEvent(), Module);
+
+			// If this was the notification we were launched from, don't display the banner
+			var appState = DonkyCore.Instance.GetService<IAppState>();
+			if (appState.WasOpenedFromNotification && appState.LaunchingNotificationId == messageEvent.NotificationId)
+			{
+				return;
+			}
+
+			// Publish event for the common UI layer
+			DonkyCore.Instance.PublishLocalEvent(new DisplayBasicMessageAlertEvent
+			{
+				Message = messageEvent.Message,
+				AlertText = messageEvent.AlertText,
+				NotificationId = messageEvent.NotificationId
 			}, Module);
 		}
 	}

@@ -126,11 +126,12 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 			buttonContainer.SetGridProperties(2, columnSpan: 2);
 			ContentGrid.Children.Add(buttonContainer);
 
-			buttonContainer.Children.Add(button1
+			// Button 2 should be on the left, button 1 on the right
+			buttonContainer.Children.Add(button2
 				.WithPadding(5)
 				.SetGridProperties(0, 0));
 
-			buttonContainer.Children.Add(button2
+			buttonContainer.Children.Add(button1
 				.WithPadding(5)
 				.SetGridProperties(0, 1));
 		}

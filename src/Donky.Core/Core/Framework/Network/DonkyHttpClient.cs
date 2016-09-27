@@ -40,9 +40,6 @@ namespace Donky.Core.Framework.Network
 	{
 		private readonly JsonMediaTypeFormatter _formatter;
 		private readonly HttpClient _client;
-        private readonly CancellationTokenSource _cts;
-		private int _activeCalls;
-		private readonly object _trackingLock = new object();
 
 		internal DonkyHttpClient()
 		{
@@ -51,7 +48,6 @@ namespace Donky.Core.Framework.Network
 				SerializerSettings = JsonSettings.CreateStandardSettings()
 			};
 
-            _cts = new CancellationTokenSource();
             _client = new HttpClient(new NativeMessageHandler());
 		}
 
@@ -59,8 +55,9 @@ namespace Donky.Core.Framework.Network
 		{
             // To cancel if there is a timeout
             bool isCancelled = false;
-            // Default timeout 60 Seconds
-            _cts.CancelAfter(60000);
+			// Default timeout 60 Seconds
+			var tokenSource = new CancellationTokenSource();
+			tokenSource.CancelAfter(60000);
 
 			var httpRequest = new HttpRequestMessage(request.Method, request.Uri);
 			if (request.Headers != null)
@@ -80,15 +77,20 @@ namespace Donky.Core.Framework.Network
 
             try
             {
-                //httpResponse = await _client.SendAsync(httpRequest, _cts.Token);
-                httpResponse = await _client.SendAsync(httpRequest);
+                httpResponse = await _client.SendAsync(httpRequest, tokenSource.Token);
             }
-            catch(OperationCancelledException oex)
+			catch(OperationCancelledException) when (tokenSource.IsCancellationRequested)
             {
-                isCancelled = true;
+				Logging.Logger.Instance.LogWarning("Request to {0} was cancelled following a timeout", request.Uri);
+				isCancelled = true;
             }
+			catch (TaskCanceledException ex)
+			{
+				Logging.Logger.Instance.LogWarning("Request to {0} was cancelled, reason: {1}", request.Uri, ex.Message);
+				isCancelled = true;
+			}
 
-            HttpResponse<TResponse> response = new HttpResponse<TResponse>();
+			HttpResponse<TResponse> response = new HttpResponse<TResponse>();
 
             if (!isCancelled)
             {

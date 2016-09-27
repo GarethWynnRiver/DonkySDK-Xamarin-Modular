@@ -16,6 +16,8 @@ using Donky.Core.Notifications;
 using Donky.Messaging.Common;
 using Donky.Messaging.Rich.Logic.Data;
 using Donky.Core.Configuration;
+using Donky.Core.Framework.Logging;
+using Donky.Core;
 
 namespace Donky.Messaging.Rich.Logic
 {
@@ -26,16 +28,17 @@ namespace Donky.Messaging.Rich.Logic
 		private readonly ICommonMessagingManager _commonMessagingManager;
 		private readonly IJsonSerialiser _serialiser;
 		private readonly IEventBus _eventBus;
+		private readonly INotificationManager _notificationManager;
+		private const int RichMessageAvailabilityDaysDefault = 30;
 
-        public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus, IConfigurationManager configurationManager)
+        public RichMessagingManager(IRichDataContext context, ICommonMessagingManager commonMessagingManager, IJsonSerialiser serialiser, IEventBus eventBus, IConfigurationManager configurationManager, INotificationManager notificationManager)
 		{
 			_context = context;
 			_commonMessagingManager = commonMessagingManager;
 			_serialiser = serialiser;
 			_eventBus = eventBus;
             _configurationManager = configurationManager;
-
-            DeleteRichMessageAvailabilityDaysExpirations();
+			_notificationManager = notificationManager;
 		}
 
 		public async Task<IEnumerable<RichMessage>> GetAllAsync()
@@ -61,24 +64,20 @@ namespace Donky.Messaging.Rich.Logic
 
 		public async Task MarkMessageAsReadAsync(Guid messageId)
 		{
-			var data = await _context.RichMessages.GetAsync(messageId);
-			if (data != null)
-			{
-				data.Message.ReadTimestamp = DateTime.UtcNow;
-				await _commonMessagingManager.NotifyMessageReadAsync(data.Message);
-				await _context.RichMessages.AddOrUpdateAsync(data);
-				await _context.SaveChangesAsync();
-			}
+			await MarkMessageAsReadInternalAsync(messageId);
 		}
 
 		public async Task DeleteMessagesAsync(params Guid[] messageIds)
 		{
-			foreach (var id in messageIds)
-			{
-				await _context.RichMessages.DeleteAsync(id);
-			}
+			await DeleteMessagesInternalAsync(true, messageIds);
+		}
 
-			await _context.SaveChangesAsync();
+		public async Task DeleteAllMessagesAsync()
+		{
+			Logger.Instance.LogInformation("Deleting ALL Rich Messages");
+			var data = await _context.RichMessages.GetAllAsync();
+			var toDelete = data.Select(m => m.Message.MessageId).ToArray();
+			await DeleteMessagesAsync(toDelete);
 		}
 
 		public async Task HandleRichMessageAsync(ServerNotification notification)
@@ -104,28 +103,46 @@ namespace Donky.Messaging.Rich.Logic
 					NotificationId = notification.NotificationId,
 					Publisher = DonkyRichLogic.Module
 				}).ExecuteInBackground();
+
+				if (!message.SilentNotification)
+				{
+					// Also publish a more generic event that the push UI modules can understand if installed to render alerts
+					_eventBus.PublishAsync(new MessageReceivedEvent
+					{
+						Message = message,
+						AlertText = message.Description,
+						NotificationId = notification.NotificationId,
+						Publisher = DonkyRichLogic.Module
+					}).ExecuteInBackground();
+				}
 			}
 
 			await _commonMessagingManager.NotifyMessageReceivedAsync(message, notification);
 		}
 
-        private async Task DeleteRichMessageAvailabilityDaysExpirations()
+		public async Task DeleteExpiredRichMessagesAsync()
         {
-            var richMessageAvailabilityDays = _configurationManager.GetValue<string>("RichMessageAvailabilityDays");
+            var richMessageAvailabilityDays = _configurationManager.GetValue<int>("RichMessageAvailabilityDays");
+			if (richMessageAvailabilityDays <= 0)
+			{
+				richMessageAvailabilityDays = RichMessageAvailabilityDaysDefault;
+			}
+
             var timeNow = DateTime.UtcNow;
 
             var messages = await GetAllAsync();
 
             List<Guid> deletionQueue = new List<Guid>();
 
-            foreach(var message in messages)
+			foreach(var message in messages.Where(m => m.ReceivedTimestamp.HasValue))
             {
-                var richMessageReceivedTime = message.ReceivedTimestamp;
-                var richMessageAvailabilityExpiry = ((DateTime)richMessageReceivedTime).AddDays(Convert.ToInt32(richMessageAvailabilityDays));
+				var receivedTime = message.ReceivedTimestamp.Value;
+				var expiryTime = message.ExpiryTimeStamp ?? receivedTime.AddDays(richMessageAvailabilityDays);
 
-                if(richMessageAvailabilityExpiry <= timeNow)
+				if(expiryTime <= timeNow)
                 {
                     deletionQueue.Add(message.MessageId);
+					Logger.Instance.LogInformation("Removing expired message {0} with description {1}", message.MessageId, message.Description);
                 }
             }
 
@@ -134,5 +151,64 @@ namespace Donky.Messaging.Rich.Logic
                 await DeleteMessagesAsync(deletionQueue.ToArray());
             }
         }
+
+		public Task HandleSyncMessageReadAsync(ServerNotification notification)
+		{
+			var messageId = Guid.Parse(notification.Data.Value<string>("messageId"));
+			return MarkMessageAsReadInternalAsync(messageId, false);
+		}
+
+		public Task HandleSyncMessageDeletedAsync(ServerNotification notification)
+		{
+			var messageId = Guid.Parse(notification.Data.Value<string>("messageId"));
+			return DeleteMessagesInternalAsync(false, messageId);
+		}
+
+		private async Task DeleteMessagesInternalAsync(bool sendNotification, params Guid[] messageIds)
+		{
+			foreach (var id in messageIds)
+			{
+				await _context.RichMessages.DeleteAsync(id);
+				if (sendNotification)
+				{
+					await _notificationManager.QueueClientNotificationAsync(new ClientNotification
+					{
+						{"type", "MessageDeleted"},
+						{"messageId", id}
+					});
+				}
+				Logger.Instance.LogInformation("Deleting rich message {0}", id);
+			}
+
+			_eventBus.PublishAsync(new RichMessageDeletedEvent(messageIds, DonkyRichLogic.Module))
+					 .ExecuteInBackground();
+
+			await _context.SaveChangesAsync();
+
+			if (sendNotification)
+			{
+				await _notificationManager.SynchroniseAsync();
+			}
+		}
+
+		private async Task MarkMessageAsReadInternalAsync(Guid messageId, bool sendNotification = true)
+		{
+			var data = await _context.RichMessages.GetAsync(messageId);
+			if (data != null && !data.Message.ReadTimestamp.HasValue)
+			{
+				data.Message.ReadTimestamp = DateTime.UtcNow;
+				if (sendNotification)
+				{
+					await _commonMessagingManager.NotifyMessageReadAsync(data.Message);
+				}
+				await _context.RichMessages.AddOrUpdateAsync(data);
+				await _context.SaveChangesAsync();
+
+				_eventBus.PublishAsync(new RichMessageReadEvent(data.Message.MessageId)
+				{
+					Publisher = DonkyRichLogic.Module
+				}).ExecuteInBackground();
+			}
+		}
 	}
 }

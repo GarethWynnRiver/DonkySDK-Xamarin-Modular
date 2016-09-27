@@ -31,10 +31,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Donky.Core.Configuration;
+using Donky.Core.Exceptions;
 using Donky.Core.Framework;
 using Donky.Core.Framework.Events;
 using Donky.Core.Framework.Extensions;
 using Donky.Core.Framework.Logging;
+using Donky.Core.Notifications;
 using Donky.Core.Notifications.Remote;
 using Donky.Core.Services;
 using Donky.Core.Services.Authentication;
@@ -57,6 +59,7 @@ namespace Donky.Core.Registration
         private readonly ISdkInformation _sdkInformation;
         private readonly ISecureRegistrationService _secureRegistrationService;
         private readonly IServiceContext _serviceContext;
+		private readonly IJsonSerialiser _serialiser;
 
         private readonly SemaphoreSlim _synchroniseLock = new SemaphoreSlim(1);
         private readonly IRefreshToken _tokenRefresher;
@@ -74,7 +77,8 @@ namespace Donky.Core.Registration
             IConfigurationManager configurationManager,
             IEventBus eventBus, 
             IRefreshToken tokenRefresher, 
-            ILogger logger)
+            ILogger logger,
+			IJsonSerialiser serialiser)
         {
             _registrationContext = registrationContext;
             _moduleManager = moduleManager;
@@ -87,6 +91,7 @@ namespace Donky.Core.Registration
             _eventBus = eventBus;
             _tokenRefresher = tokenRefresher;
             _logger = logger;
+			_serialiser = serialiser;
         }
 
         public async Task EnsureRegisteredAsync(UserDetails user, DeviceDetails device, string appVersion,
@@ -96,26 +101,9 @@ namespace Donky.Core.Registration
             _appVersion = appVersion;
 
 	        try
-	        {
-		        await _synchroniseLock.WaitAsync();
-
-				if (await _registrationContext.GetUser() == null || isReplacement)
-				{
-					// New registration or ReplaceRegistration
-					await RegisterAsync(user, device, appVersion, true);
-				}
-
-				if (isReplacement)
-				{
-					// Refresh token
-					await _tokenRefresher.RefreshTokenAsync();
-					_registrationContext.DeviceSecret = Guid.NewGuid().ToString();
-					// Update user details
-					await _registrationContext.SetUser(user);
-					await _registrationContext.SetDevice(device);
-				}
-
-				PublishRegistrationChanged();
+			{
+				await _synchroniseLock.WaitAsync();
+				await EnsureRegisteredWithoutLockAsync(user, device, appVersion, isReplacement);
 			}
 			finally
 	        {
@@ -123,7 +111,7 @@ namespace Donky.Core.Registration
 	        }
         }
 
-        public async Task UpdatePushRegistrationAsync(RemoteChannelDetails details)
+		public async Task UpdatePushRegistrationAsync(RemoteChannelDetails details)
         {
             if (details == null)
             {
@@ -192,11 +180,13 @@ namespace Donky.Core.Registration
 
         public async Task<RegistrationDetails> GetRegistrationDetailsAsync()
         {
-            // Make sure to clone the details here.
-            return new RegistrationDetails
-            {
-                UserDetails = new UserDetails(await _registrationContext.GetUser()),
-                DeviceDetails = new DeviceDetails(await _registrationContext.GetDevice())
+			// Make sure to clone the details here.
+			var userDetails = await _registrationContext.GetUser();
+			var deviceDetails = await _registrationContext.GetDevice();
+			return new RegistrationDetails
+			{
+                UserDetails = userDetails == null ? null : new UserDetails(userDetails),
+                DeviceDetails = deviceDetails == null ? null : new DeviceDetails(deviceDetails)
             };
         }
 
@@ -222,13 +212,28 @@ namespace Donky.Core.Registration
 						// Composite update
 						var isAnonymous = wasAnonymous && oldUserId == user.UserId;
 
-						await _secureRegistrationService.UpdateRegistrationAsync(new RegistrationDetail
+						try
 						{
-							Client = CreateClientDetail(),
-							Device = await CreateServiceDevice(device),
-							User = CreateServiceUser(user)
-						});
-
+							await _secureRegistrationService.UpdateRegistrationAsync(new RegistrationDetail
+							{
+								Client = CreateClientDetail(),
+								Device = await CreateServiceDevice(device),
+								User = CreateServiceUser(user)
+							});
+						}
+						catch (ValidationException ex)
+						{
+							if (ex.ValidationFailures.Count == 1 && ex.ValidationFailures.Single().FailureKey == "UserIdAlreadyTaken")
+							{
+								Logger.Instance.LogInformation("UserId {0} is already taken.  Starting ReplaceRegistration flow.", user.UserId);
+								await EnsureRegisteredWithoutLockAsync(user, device, _appVersion, true);
+								return;
+							}
+							else
+							{
+								throw;
+							}
+						}
 						await UpdateUserInContext(user, user.UserId, isAnonymous);
 						await UpdateDeviceInContext(device);
 					}
@@ -314,7 +319,49 @@ namespace Donky.Core.Registration
 			}, "SetTagsAsync");
         }
 
-        private async Task RegisterAsync(UserDetails user, DeviceDetails device, string appVersion, bool alreadyLocked = false)
+		public async Task HandleUserUpdatedAsync(ServerNotification notification)
+		{
+			var userDetails = await _registrationContext.GetUser();
+			var data = _serialiser.Deserialise<UserUpdatedData>(notification.Data.ToString());
+			if (data != null)
+			{
+				userDetails = userDetails ?? new UserDetails();
+				userDetails.AdditionalProperties = data.AdditionalProperties;
+				userDetails.AvatarAssetId = data.AvatarAssetId;
+				userDetails.CountryCode = data.CountryIsoCode;
+				userDetails.DisplayName = data.DisplayName;
+				userDetails.EmailAddress = data.EmailAddress;
+				userDetails.FirstName = data.FirstName;
+				userDetails.IsAnonymous = data.IsAnonymous;
+				userDetails.LastName = data.LastName;
+				userDetails.MobileNumber = data.PhoneNumber;
+				userDetails.SelectedTags = data.SelectedTags.ToArray();
+				userDetails.UserId = !String.IsNullOrEmpty(data.NewExternalUserId) ? data.NewExternalUserId : data.ExternalUserId;
+				await _registrationContext.SetUser(userDetails);
+				PublishRegistrationChanged();
+			}
+		}
+
+		private async Task EnsureRegisteredWithoutLockAsync(UserDetails user, DeviceDetails device, string appVersion, bool isReplacement)
+		{
+			var existingUser = await _registrationContext.GetUser();
+			if (existingUser == null || isReplacement)
+			{
+				// New registration or ReplaceRegistration
+				await RegisterAsync(user, device, appVersion, true);
+			}
+
+			if (isReplacement)
+			{
+				// Refresh token
+				await _tokenRefresher.RefreshTokenAsync();
+				_registrationContext.DeviceSecret = Guid.NewGuid().ToString();
+			}
+
+			PublishRegistrationChanged();
+		}
+
+		private async Task RegisterAsync(UserDetails user, DeviceDetails device, string appVersion, bool alreadyLocked = false)
         {
 	        try
 	        {
@@ -350,6 +397,8 @@ namespace Donky.Core.Registration
 
 		        _logger.LogInformation("Registered successfully.  NetworkId: {0}",
 			        response.NetworkId);
+
+				PublishRegistrationChanged();
 
 		        _logger.LogDebug("New token expiry time: {0}", response.AccessDetails.ExpiresOn);
 
@@ -486,7 +535,7 @@ namespace Donky.Core.Registration
             }
         }
 
-        public string NotificationSoundFilename { get; set; }
+		public string NotificationSoundFilename { get; set; }
        
     }
 }

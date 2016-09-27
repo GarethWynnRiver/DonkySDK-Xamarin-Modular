@@ -54,6 +54,8 @@ namespace Donky.Core.Notifications
 		private readonly List<OutboundNotificationSubscription> _outboundSubscriptions = new List<OutboundNotificationSubscription>();
 		private readonly object _subscriptionLock = new object();
 		private readonly SemaphoreSlim _synchroniseLock = new SemaphoreSlim(1);
+		private readonly Queue<string> _recentNotificationIds = new Queue<string>();
+		private readonly object _recentNotificationLock = new object();
 
 		public NotificationManager(IDonkyClientDataContext dataContext, INotificationService notificationService, IModuleManager moduleManager, IAppState appState, IJsonSerialiser serialiser, ILogger logger)
 		{
@@ -276,19 +278,48 @@ namespace Donky.Core.Notifications
 			}
 		}
 
-		private Task HandleServerNotificationAsync(ServerNotification notification)
+		private async Task HandleServerNotificationAsync(ServerNotification notification)
 		{
 #if DEBUG
             _logger.LogDebug("ServerNotification of type {0}: {1}", notification.Type,
                 notification.Data.ToString());
 #endif
-			if (notification.Type.ToLowerInvariant() == "custom")
+
+			if (!IsDuplicate(notification))
 			{
-				return HandleCustomNotificationAsync(notification);
+				if (notification.Type.ToLowerInvariant() == "custom")
+				{
+					await HandleCustomNotificationAsync(notification);
+				}
+				else
+				{
+					await HandleDonkyNotificationAsync(notification);
+				}
 			}
-			else
+			else 
 			{
-				return HandleDonkyNotificationAsync(notification);
+				_logger.LogWarning("Ignoring notification {0} as it was detected as a duplicate", notification.NotificationId);
+			}
+		}
+
+		private bool IsDuplicate(ServerNotification notification)
+		{
+			lock(_recentNotificationLock)
+			{
+				if (_recentNotificationIds.Contains(notification.NotificationId))
+				{
+					return true;
+				}
+
+				_recentNotificationIds.Enqueue(notification.NotificationId);
+
+				while (_recentNotificationIds.Count > 100)
+				{
+					// Remove oldest ids to keep a rolling buffer.
+					_recentNotificationIds.Dequeue();
+				}
+
+				return false;
 			}
 		}
 

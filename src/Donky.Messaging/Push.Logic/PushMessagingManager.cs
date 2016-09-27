@@ -28,8 +28,9 @@ namespace Donky.Messaging.Push.Logic
 		private readonly INotificationManager _notificationManager;
 		private readonly IEnvironmentInformation _environmentInformation;
 		private readonly IPushDataContext _pushDataContext;
+		private readonly IDeviceInteraction _deviceInteraction;
 
-		public PushMessagingManager(IJsonSerialiser serialiser, ICommonMessagingManager commonMessagingManager, IDonkyCore donkyCore, INotificationManager notificationManager, IEnvironmentInformation environmentInformation, IPushDataContext pushDataContext)
+		public PushMessagingManager(IJsonSerialiser serialiser, ICommonMessagingManager commonMessagingManager, IDonkyCore donkyCore, INotificationManager notificationManager, IEnvironmentInformation environmentInformation, IPushDataContext pushDataContext, IDeviceInteraction deviceInteraction)
 		{
 			_serialiser = serialiser;
 			_commonMessagingManager = commonMessagingManager;
@@ -37,6 +38,7 @@ namespace Donky.Messaging.Push.Logic
 			_notificationManager = notificationManager;
 			_environmentInformation = environmentInformation;
 			_pushDataContext = pushDataContext;
+			_deviceInteraction = deviceInteraction;
 
 			_donkyCore.SubscribeToLocalEvent<AppOpenEvent>(HandleAppOpen);
 		}
@@ -68,7 +70,7 @@ namespace Donky.Messaging.Push.Logic
 			}
 		}
 
-		public async Task HandleInteractionResultAsync(Guid messageId, string interactionType, string buttonDescription, string userAction)
+		public async Task HandleInteractionResultAsync(Guid messageId, string interactionType, string buttonDescription, string userAction, string actionType = null, string data = null)
 		{
 			var interactionTime = DateTime.UtcNow;
 			var message = await _pushDataContext.SimplePushMessages.GetAsync(messageId);
@@ -91,6 +93,13 @@ namespace Donky.Messaging.Push.Logic
 				});
 
 				await _pushDataContext.SaveChangesAsync();
+			}
+
+			if ((actionType == "DeepLink" || actionType == "ExternalUrl") && !String.IsNullOrEmpty(data))
+			{
+				// We have a link, need to use the OS to open this.
+				Logger.Instance.LogInformation("Attempting to open URI {0}", data);
+				_deviceInteraction.OpenUri(data);
 			}
 		}
 

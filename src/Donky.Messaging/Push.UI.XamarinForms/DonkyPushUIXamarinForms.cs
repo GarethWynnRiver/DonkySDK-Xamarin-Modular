@@ -13,6 +13,7 @@ using Donky.Core.Framework;
 using Donky.Core.Framework.Extensions;
 using Donky.Core.Registration;
 using Donky.Core.Xamarin.Forms.Alerts;
+using Donky.Messaging.Common;
 using Donky.Messaging.Push.Logic;
 using Xamarin.Forms;
 
@@ -45,7 +46,8 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 				DonkyCore.Instance.RegisterModule(Module);
 
 				DonkyCore.Instance.SubscribeToLocalEvent<DisplaySimplePushAlertEvent>(HandleDisplaySimplePushAlert);
-	
+				DonkyCore.Instance.SubscribeToLocalEvent<DisplayBasicMessageAlertEvent>(HandleDisplayBasicMessageAlert);
+
 				_isInitialised = true;
 			}
 		}
@@ -53,10 +55,64 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 		private static void HandleDisplaySimplePushAlert(DisplaySimplePushAlertEvent alertEvent)
 		{
 			var messageEvent = alertEvent.MessageReceivedEvent;
-
-			var alertView = new SimplePushAlertView();
-			var avatarId = messageEvent.Message.AvatarAssetId;
+			Message message = messageEvent.Message;
 			var autoDismiss = true;
+			SimplePushAlertView alertView;
+			DisplayAlertEvent displayAlertEvent;
+			CreateBasicAlertView(message, out alertView, out displayAlertEvent);
+
+			if (messageEvent.PlatformButtonSet != null)
+			{
+				var manager = DonkyCore.Instance.GetService<IPushMessagingManager>();
+				var pushMessage = messageEvent.Message;
+				var buttonSet = messageEvent.PlatformButtonSet;
+				var description = String.Join("|", buttonSet.ButtonSetActions.Select(a => a.Label));
+
+				if (buttonSet.ButtonSetActions.Count == 2)
+				{
+					var button1Config = buttonSet.ButtonSetActions[0];
+					var button2Config = buttonSet.ButtonSetActions[1];
+					alertView.AddActionButtons(
+						button1Config.Label,
+						() =>
+						{
+							manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
+								description,
+								"Button1", button1Config.ActionType, button1Config.Data).ExecuteInBackground();
+							displayAlertEvent.Dismiss();
+						},
+						button2Config.Label,
+						() =>
+						{
+							manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
+								description,
+								"Button2", button2Config.ActionType, button2Config.Data).ExecuteInBackground();
+							displayAlertEvent.Dismiss();
+						});
+				}
+				else if (buttonSet.ButtonSetActions.Count == 1)
+				{
+					var button1Config = buttonSet.ButtonSetActions[0];
+					displayAlertEvent.TapAction = () =>
+					{
+						manager.HandleInteractionResultAsync(pushMessage.MessageId, buttonSet.InteractionType,
+							description,
+							"Button1", button1Config.ActionType, button1Config.Data).ExecuteInBackground();
+					};
+				}
+
+				autoDismiss = false;
+			}
+
+			displayAlertEvent.AutoDismiss = autoDismiss;
+
+			DonkyCore.Instance.PublishLocalEvent(displayAlertEvent, Module);
+		}
+
+		private static void CreateBasicAlertView(Message message, out SimplePushAlertView alertView, out DisplayAlertEvent displayAlertEvent, string bodyOverride = null)
+		{
+			alertView = new SimplePushAlertView();
+			var avatarId = message.AvatarAssetId;
 			if (!String.IsNullOrEmpty(avatarId))
 			{
 				var assetHelper = DonkyCore.Instance.GetService<IAssetHelper>();
@@ -65,42 +121,22 @@ namespace Donky.Messaging.Push.UI.XamarinForms
 					Uri = new Uri(assetHelper.CreateUriForAsset(avatarId))
 				};
 			}
-            alertView.TitleLabel.Text = messageEvent.Message.SenderDisplayName;
-			alertView.BodyLabel.Text = messageEvent.Message.Body;
+			alertView.TitleLabel.Text = message.SenderDisplayName;
+			alertView.BodyLabel.Text = bodyOverride ?? message.Body;
 
-			var displayAlertEvent = new DisplayAlertEvent
+			displayAlertEvent = new DisplayAlertEvent
 			{
 				Content = alertView
 			};
+		}
 
-			if(messageEvent.PlatformButtonSet != null)
-			{
-				var manager = DonkyCore.Instance.GetService<IPushMessagingManager>();
-				var message = messageEvent.Message;
-				var buttonSet = messageEvent.PlatformButtonSet;
-				var description = String.Join("|", buttonSet.ButtonSetActions.Select(a => a.Label));
-
-				alertView.AddActionButtons(
-					buttonSet.ButtonSetActions[0].Label,
-					() =>
-					{
-						manager.HandleInteractionResultAsync(message.MessageId, buttonSet.InteractionType,
-							description,
-							"Button1").ExecuteInBackground();
-						displayAlertEvent.Dismiss();
-					},
-					buttonSet.ButtonSetActions[1].Label,
-					() =>
-					{
-						manager.HandleInteractionResultAsync(message.MessageId, buttonSet.InteractionType,
-							description,
-							"Button2").ExecuteInBackground();
-						displayAlertEvent.Dismiss();
-					});
-				autoDismiss = false;
-			}
-
-			displayAlertEvent.AutoDismiss = autoDismiss;
+		private static void HandleDisplayBasicMessageAlert(DisplayBasicMessageAlertEvent alertEvent)
+		{
+			Message message = alertEvent.Message;
+			SimplePushAlertView alertView;
+			DisplayAlertEvent displayAlertEvent;
+			CreateBasicAlertView(message, out alertView, out displayAlertEvent, alertEvent.AlertText);
+			displayAlertEvent.AutoDismiss = true;
 
 			DonkyCore.Instance.PublishLocalEvent(displayAlertEvent, Module);
 		}

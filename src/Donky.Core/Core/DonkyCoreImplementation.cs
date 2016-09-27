@@ -112,6 +112,7 @@ namespace Donky.Core
 
 					_startupManager.PerformStartupTasksAsync().ExecuteInBackground();
 
+					PublishLocalEvent(new SdkInitialisedEvent(), CoreModuleDefinition);
 				}, "InitialiseAsync");
 			}
 			finally
@@ -250,8 +251,22 @@ namespace Donky.Core
 
 						return Task.FromResult(0);
 					}
+				},
+				new DonkyNotificationSubscription
+				{
+					Type = "UserUpdated",
+					AutoAcknowledge = true,
+					Handler = _registrationManager.HandleUserUpdatedAsync
 				}
 				);
+
+			SubscribeToLocalEvent<AppOpenEvent>(async e =>
+			{
+				if (IsInitialised && await RegistrationController.GetIsRegisteredAsync())
+				{
+					await NotificationController.SynchroniseAsync();
+				}
+			});
 		}
 
 		private void ThrowIfNotInitialised()
