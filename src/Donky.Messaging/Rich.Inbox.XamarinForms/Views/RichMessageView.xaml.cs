@@ -13,7 +13,6 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 
 		public RichMessageView()
 		{
-			InitializeComponent();
 			_webView = new WebView();
 			Content = _webView;
 		}

@@ -15,6 +15,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+PackagesToPublish/
 
 # Roslyn cache directories
 *.ide/
