@@ -5,11 +5,8 @@
 //  Copyright:       Donky Networks Ltd 2015
 // ///////////////////////////////////////////////////////////////////////////////////////////
 using System;
-using Autofac;
 using Donky.Core;
 using Donky.Core.Framework;
-using Donky.Core.Framework.Logging;
-using Donky.Core.Framework.Storage;
 using Donky.Core.Notifications;
 using Donky.Core.Registration;
 using Donky.Messaging.Push.Logic.Data;

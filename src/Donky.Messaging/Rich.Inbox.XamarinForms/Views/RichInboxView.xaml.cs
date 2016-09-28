@@ -11,7 +11,6 @@ namespace Donky.Messaging.Rich.Inbox.XamarinForms
 	{
 		public RichInboxView()
 		{
-			InitializeComponent();
 		}
 
 		public RichInboxViewModel ViewModel
