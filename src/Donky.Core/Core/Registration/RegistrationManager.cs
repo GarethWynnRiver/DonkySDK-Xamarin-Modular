@@ -241,8 +241,24 @@ namespace Donky.Core.Registration
 					{
 						var isAnonymous = wasAnonymous && oldUserId == user.UserId;
 
-						// User only update
-						await _secureRegistrationService.UpdateUserAsync(CreateServiceUser(user));
+						try
+						{
+							// User only update
+							await _secureRegistrationService.UpdateUserAsync(CreateServiceUser(user));
+						}
+						catch (ValidationException ex)
+						{
+							if (ex.ValidationFailures.Count == 1 && ex.ValidationFailures.Single().FailureKey == "UserIdAlreadyTaken")
+							{
+								Logger.Instance.LogInformation("UserId {0} is already taken.  Starting ReplaceRegistration flow.", user.UserId);
+								await EnsureRegisteredWithoutLockAsync(user, null, _appVersion, true);
+								return;
+							}
+							else
+							{
+								throw;
+							}
+						}
 
 						await UpdateUserInContext(user, user.UserId, isAnonymous);
 					}
