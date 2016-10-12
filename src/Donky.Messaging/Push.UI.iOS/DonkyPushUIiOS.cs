@@ -41,7 +41,7 @@ namespace Donky.Messaging.Push.UI.iOS
 		/// Initialises this module.
 		/// </summary>
 		/// <exception cref="System.InvalidOperationException">DonkyPushUIiOS is already initialised</exception>
-		public static void Initialise()
+		public static void Initialise(bool initialiseFormsPushUI = true)
 		{
 			lock (Lock)
 			{
@@ -50,7 +50,10 @@ namespace Donky.Messaging.Push.UI.iOS
 					throw new InvalidOperationException("DonkyPushUIiOS is already initialised");
 				}
 
-				DonkyPushUIXamarinForms.Initialise();
+				if (initialiseFormsPushUI)
+				{
+					DonkyPushUIXamarinForms.Initialise();
+				}
 
 				DonkyCore.Instance.RegisterModule(Module);
 				DonkyCore.Instance.SubscribeToLocalEvent<SimplePushMessageReceivedEvent>(HandleSimplePushReceived);
