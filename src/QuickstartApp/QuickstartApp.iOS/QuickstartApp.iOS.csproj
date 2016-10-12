@@ -160,6 +160,7 @@
     </ProjectReference>
     <ProjectReference Include="..\QuickstartApp\QuickstartApp.csproj">
       <Name>QuickstartApp</Name>
+      <Project>{F15E0F21-E711-4663-8AFA-CDD2F4F1430A}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

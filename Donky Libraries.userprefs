@@ -1,0 +1,38 @@
+﻿<Properties StartupConfiguration="{8247EA89-8A36-4519-AE96-F01C0D518CC1}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="src/QuickstartApp/QuickstartApp/ViewModels/Notifications/RandomCustomMessageNotificationViewModel.cs">
+    <Files>
+      <File FileName="src/QuickstartApp/QuickstartApp/AppBootstrap.cs" Line="19" Column="37" />
+      <File FileName="src/QuickstartApp/QuickstartApp/ViewModels/Notifications/RandomCustomMessageNotificationViewModel.cs" Line="2" Column="7" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="Donky Libraries" expanded="True">
+            <Node name="Libraries" expanded="True" />
+            <Node name="Quickstart App" expanded="True">
+              <Node name="QuickstartApp" expanded="True">
+                <Node name="Packages" expanded="True" />
+                <Node name="ViewModels" expanded="True">
+                  <Node name="Notifications" expanded="True">
+                    <Node name="RandomCustomMessageNotificationViewModel.cs" selected="True" />
+                  </Node>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.ItemProperties.Libraries.Donky.Core.Xamarin.Android PreferredExecutionTarget="Android.Android_Accelerated_x86" />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <DisabledProjects>
+    <String>src/QuickstartApp/QuickstartApp/QuickstartApp.csproj</String>
+    <String>src/QuickstartApp/QuickstartApp.iOS/QuickstartApp.iOS.csproj</String>
+    <String>src/QuickstartApp/QuickstartApp.Droid/QuickstartApp.Droid.csproj</String>
+  </DisabledProjects>
+</Properties>
