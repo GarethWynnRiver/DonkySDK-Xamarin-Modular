@@ -93,7 +93,18 @@ namespace Donky.Core.Xamarin.iOS
 			var state = UIApplication.SharedApplication.ApplicationState;
 			Logger.Instance.LogDebug("DidReceiveRemoteNotification, state: {0}", state);
 			SetLaunchState(state, userInfo);
-			DonkyCore.Instance.PublishLocalEvent(new ApnsNotificationReceivedEvent(userInfo, completionHandler), Module);			
+
+			// If we have received a 'single button' push and were lauched from the notification then handle the action
+			if (state != UIApplicationState.Active && userInfo.ContainsKey("act1"))
+			{
+				var label = userInfo.GetValue<string>("lbl1");
+				var localEvent = new ApnsNotificationActionEvent(label, userInfo, new Action(() => completionHandler(UIBackgroundFetchResult.NoData)));
+				DonkyCore.Instance.PublishLocalEvent(localEvent, Module);
+			}
+			else
+			{
+				DonkyCore.Instance.PublishLocalEvent(new ApnsNotificationReceivedEvent(userInfo, completionHandler), Module);
+			}
 		}
 
 		public static void FailedToRegisterForRemoteNotifications(UIApplication application, NSError error)

@@ -80,11 +80,13 @@ namespace Donky.Messaging.Push.UI.iOS
 			}
 
 			var option1 = actionEvent.NotificationInfo.GetValue<string>("lbl1");
-			var option2 = actionEvent.NotificationInfo.GetValue<string>("lbl2");
 			var action1 = actionEvent.NotificationInfo.GetValue<string>("act1");
-			var action2 = actionEvent.NotificationInfo.GetValue<string>("act2");
 			var data1 = actionEvent.NotificationInfo.GetValue<string>("link1");
-			var data2 = actionEvent.NotificationInfo.GetValue<string>("link2");
+
+			bool hasAction2 = actionEvent.NotificationInfo.ContainsKey("lbl2");
+			var option2 = hasAction2 ? actionEvent.NotificationInfo.GetValue<string>("lbl2") : String.Empty;
+			var action2 = hasAction2 ? actionEvent.NotificationInfo.GetValue<string>("act2") : String.Empty;
+			var data2 = hasAction2 ? actionEvent.NotificationInfo.GetValue<string>("link2") : String.Empty;
 
 			var wasOption1 = actionEvent.Action.ToLowerInvariant() == option1.ToLowerInvariant();
 			var userAction = wasOption1
